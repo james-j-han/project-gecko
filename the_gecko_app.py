@@ -208,6 +208,7 @@ class GUI(QtWidgets.QMainWindow):
 			'https://www.bestbuy.ca/',
 			'https://www.bestbuy.com/',
 			'https://www.hottopic.com/',
+			'https://www.shopdisney.com/',
 			'https://www.supremenewyork.com/',
 			'https://www.target.com/'
 		]
@@ -216,8 +217,9 @@ class GUI(QtWidgets.QMainWindow):
 		self.ui.combo_box_store.addItem(self.stores[1], 'nv')
 		self.ui.combo_box_store.addItem(self.stores[2], 'nv')
 		self.ui.combo_box_store.addItem(self.stores[3], 'nk')
-		self.ui.combo_box_store.addItem(self.stores[4], 'nk')
-		self.ui.combo_box_store.addItem(self.stores[5], 'nv')
+		self.ui.combo_box_store.addItem(self.stores[4], 'nv')
+		self.ui.combo_box_store.addItem(self.stores[5], 'nk')
+		self.ui.combo_box_store.addItem(self.stores[6], 'nv')
 
 		self.fallback_sitekeys = {
 			'https://shop.funko.com/': '6LeoeSkTAAAAAA9rkZs5oS82l69OEYjKRZAiKdaF',
@@ -902,9 +904,15 @@ class GUI(QtWidgets.QMainWindow):
 		if self.ui.check_box_same_as_shipping.isChecked():
 			pair[1].setCurrentIndex(pair[0].currentIndex())
 
-	def request_captcha(self, task_id, url):
-		if not self.captcha_window.load_captcha(task_id, url):
-			self.tasks[task_id].solver_available = False
+	def request_captcha(self, task_id):
+		self.tasks[task_id].load_captcha()
+
+	def poll_response(self, task_id):
+		self.tasks[task_id].check_response()
+
+	# def request_captcha(self, task_id, url, cookies):
+	# 	if not self.captcha_window.load_captcha(task_id, url):
+	# 		self.tasks[task_id].solver_available = False
 
 	def avail(self):
 		self.captcha_window.avail()
@@ -1700,6 +1708,7 @@ class GUI(QtWidgets.QMainWindow):
 			task.delete.connect(self.delete_task)
 			task.error_delete.connect(self.error_on_delete_task)
 			task.request_captcha.connect(self.request_captcha)
+			task.poll_response.connect(self.poll_response)
 			# task.poll_token.connect(self.get_token_from_queue)
 			task.request_abort.connect(self.request_abort)
 			task.update_proxy_label.connect(self.update_proxy)
@@ -1712,7 +1721,7 @@ class GUI(QtWidgets.QMainWindow):
 			# task.update_image.connect(self.update_image)
 			# task.update_size.connect(self.update_size)
 			task.send_cookies.connect(self.set_cookies)
-			task.send_url.connect(self.render_js)
+			# task.send_url.connect(self.render_js)
 			if update:
 				self.update_task(task, row)
 			else:

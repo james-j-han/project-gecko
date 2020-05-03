@@ -6,6 +6,7 @@ from PyQt5.QtNetwork import QNetworkCookie, QNetworkCookieJar
 from stores.store_shopify import Shopify
 from stores.store_target import Target
 from stores.store_bestbuy import BestBuy
+from stores.store_disney import Disney
 from search import Search
 
 import time
@@ -32,7 +33,9 @@ class Task(QThread):
 	request_show = pyqtSignal(int)
 	load_browser = pyqtSignal(int)
 
-	request_captcha = pyqtSignal(int, str)
+	request_captcha = pyqtSignal(int)
+	poll_response = pyqtSignal(int)
+
 	poll_token = pyqtSignal(int, str)
 	request_abort = pyqtSignal(int)
 
@@ -198,6 +201,8 @@ class Task(QThread):
 		self.size_set = False
 		self.proxy_set = False
 
+		self.cookie_jar = QNetworkCookieJar()
+
 		# url_data = urllib.request.urlopen(url).read()
 		# image = QtGui.QImage()
 		# image.loadFromData(url_data)
@@ -246,6 +251,8 @@ class Task(QThread):
 			self.store = Target(self.search, self.qty, self.size, self.color, self.account, self.profile, self.billing)
 		elif self.store_name == 'https://www.bestbuy.com/':
 			self.store = BestBuy(self.search, self.qty, self.size, self.color, self.profile, self.billing)
+		elif self.store_name == 'https://www.shopdisney.com/':
+			self.store = Disney(self.search, self.qty, self.size, self.color, self.profile, self.billing)
 		else:
 			print('No matching store')
 
@@ -255,10 +262,48 @@ class Task(QThread):
 		self.store.update_status.connect(lambda message: self.update_status.emit(message, self.widget_task_id))
 		self.store.update_title.connect(lambda title: self.update_title.emit(title, self.widget_task_id))
 		self.store.update_image.connect(self.update_image)
+		self.store.request_captcha.connect(lambda: self.request_captcha.emit(self.task_id))
+		self.store.poll_response.connect(lambda: self.poll_response.emit(self.task_id))
 
-	def captcha_detected(self, sitekey):
-		self.request_browser.emit(self.task_id, self.store_name, sitekey)
-		self.update_status.emit('Waiting for captcha', self.widget_task_id)
+	def load_captcha(self):
+		self.captcha_window = QWebEngineView()
+		self.captcha_window.loadFinished.connect(self.render_captcha)
+		for cookie in self.store.cookies:
+			self.captcha_window.page().profile().cookieStore().setCookie(cookie)
+
+		self.captcha_window.load(QtCore.QUrl(self.store.captcha_url))
+		self.captcha_window.show()
+
+	def render_captcha(self):
+		script = '''
+		var loop = setInterval(function() {{
+			if (document.getElementById('g-recaptch') === null) {{
+				
+			}} else {{
+				var d = document.getElementById('g-recaptch');
+				document.body.innerHTML = '';
+				document.body.appendChild(d);
+				clearInterval(loop);
+			}}
+		}}, 100);
+		'''
+		self.captcha_window.page().runJavaScript(script, self.div_call)
+
+	def div_call(self, data):
+		script = "document.getElementById('g-recaptch');"
+		# script = 'd.reset();'
+		self.captcha_window.page().runJavaScript(script)
+
+	def check_response(self):
+		script = '''
+		grecaptcha.getResponse();
+		'''
+		self.captcha_window.page().runJavaScript(script, self.token_call)
+
+	def token_call(self, data):
+		print(f'DATA: {data}')
+		if data:
+			self.store.g_recaptcha_response = data
 
 	def update_image(self):
 		url_data = urllib.request.urlopen(self.store.src).read()
@@ -458,6 +503,8 @@ class Task(QThread):
 		self.button_stop.setEnabled(True)
 		self.button_start.setEnabled(False)
 		self.button_delete.setEnabled(False)
+
+	#--------------------Captcha--------------------
 
 	#--------------------Main Loop--------------------
 
