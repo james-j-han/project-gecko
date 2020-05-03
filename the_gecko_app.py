@@ -300,11 +300,11 @@ class GUI(QtWidgets.QMainWindow):
 		# --------------------Recaptcha Window--------------------
 
 		# --------------------Icons--------------------
-		icon_start = QtGui.QIcon(QtGui.QPixmap('src/icon_play.png'))
-		icon_stop = QtGui.QIcon(QtGui.QPixmap('src/icon_stop.png'))
-		icon_delete = QtGui.QIcon(QtGui.QPixmap('src/light_icon_trash.png'))
-		icon_captcha = QtGui.QIcon(QtGui.QPixmap('src/icon_captcha.png'))
-		icon_save = QtGui.QIcon(QtGui.QPixmap('src/icon_save.png'))
+		# icon_start = QtGui.QIcon(QtGui.QPixmap('src/icon_play.png'))
+		# icon_stop = QtGui.QIcon(QtGui.QPixmap('src/icon_stop.png'))
+		# icon_delete = QtGui.QIcon(QtGui.QPixmap('src/light_icon_trash.png'))
+		# icon_captcha = QtGui.QIcon(QtGui.QPixmap('src/icon_captcha.png'))
+		# icon_save = QtGui.QIcon(QtGui.QPixmap('src/icon_save.png'))
 		# self.ui.push_button_start_tasks.setIcon(icon_start)
 		# self.ui.push_button_stop_tasks.setIcon(icon_stop)
 		# self.ui.push_button_delete_all_tasks.setIcon(icon_delete)
@@ -1379,44 +1379,6 @@ class GUI(QtWidgets.QMainWindow):
 
 	#--------------------Custom Signal Functions--------------------
 
-	def update_token_status(self, status, item):
-		row = self.ui.table_widget_tokens.row(item)
-		self.ui.table_widget_tokens.item(row, 2).setText(status)
-		self.ui.table_widget_tokens.viewport().update()
-
-	def update_token_retry(self, time, item):
-		row = self.ui.table_widget_tokens.row(item)
-		if time < 0:
-			message = ''
-		else:
-			message = 'Retrying in {} seconds'.format(time)
-		self.ui.table_widget_tokens.item(row, 3).setText(message)
-		self.ui.table_widget_tokens.viewport().update()
-
-	def update_token_life(self, life, item):
-		row = self.ui.table_widget_tokens.row(item)
-		message = '{} seconds'.format(life)
-		self.ui.table_widget_tokens.item(row, 4).setText(message)
-		self.ui.table_widget_tokens.viewport().update()
-
-	def update_token_log(self, message):
-		self.post_to_log(message)
-
-	def delete_token(self, item):
-		self.token_count -= 1
-		self.ui.label_token_qty.setText('{}'.format(self.token_count))
-		row = self.ui.table_widget_tokens.row(item)
-		self.ui.table_widget_tokens.removeRow(row)
-		del self.tokens[row]
-		tokens = {}
-		for token in self.tokens.values():
-			tokens[self.ui.table_widget_tokens.row(token.widget_store)] = token
-		self.tokens = tokens
-
-	def update_token_count(self):
-		self.token_count += 1
-		self.ui.label_token_qty.setText('{}'.format(self.token_count))
-
 	def update_task_status(self, message, item):
 		row = self.ui.table_widget_tasks.row(item)
 		self.ui.table_widget_tasks.item(row, 8).setText(message)
@@ -1837,10 +1799,6 @@ class GUI(QtWidgets.QMainWindow):
 
 	def callable(self, data):
 		print(data)
-
-	def render_js(self, task_id, url, cookies):
-		page = Webpage(url, cookies)
-		self.renderers[task_id] = page
 
 	def load_task_browser(self, task_id):
 		self.tasks[task_id].render_browser()
