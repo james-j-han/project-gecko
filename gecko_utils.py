@@ -1,4 +1,3 @@
-from discord_webhook import DiscordWebhook, DiscordEmbed
 from bs4 import BeautifulSoup
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
@@ -9,6 +8,7 @@ import time
 import base64
 import random
 import requests
+import datetime
 import urllib.parse
 
 def get_sitekey(html):
@@ -171,9 +171,9 @@ def get_encrypted_card(public_key, card_number, key_id=None, ca=False):
 	print(number)
 	return number
 
-def post_webhook(title, store, link, price, qty, src, color, size):
+def post_webhook(title, store, link, price, qty, src, color='N/A', size='N/A'):
 	url = 'https://discordapp.com/api/webhooks/601232887219748874/tu1D8PBWC7STcVZ0nPArrvKiFoSVApLroINAOHC54a9SUA0XKKrE-DVj5TKw3JEF4_-P'
-	time = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+	t = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
 	payload = {
 		'username': 'Success',
 		'avatar_url': 'https://i.imgur.com/E6zcSEY.png',
@@ -215,7 +215,7 @@ def post_webhook(title, store, link, price, qty, src, color, size):
 				'text': 'Powered by The Gecko App | @jayimshan',
 				'icon_url': 'https://i.imgur.com/E6zcSEY.png'
 			},
-			'timestamp': time
+			'timestamp': tuple
 		}]
 	}
 	requests.post(url, json=payload)

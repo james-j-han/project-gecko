@@ -585,6 +585,8 @@ class Task(QThread):
 							else:
 								self.countdown = self.delay
 								break
+					break
+
 
 		# while not self.abort:
 		# 	if self.delaying:
