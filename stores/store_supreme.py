@@ -170,6 +170,7 @@ class Supreme(QObject):
 							if self.category.lower() == category.lower():
 								for p in data['products_and_categories']['{}'.format(self.category)]:
 									if self.search_for_product(p, proxy):
+										print(colored(p, "yellow"))
 										return True
 					return False
 				except requests.exceptions.ProxyError as e:
@@ -183,6 +184,7 @@ class Supreme(QObject):
 	# Search for matching product
 	def search_for_product(self, product, proxy):
 		title = product['name']
+		print(colored(self.keywords, "red"))
 		if all(kw in title.lower() for kw in self.keywords['pos']):
 			if self.keywords['neg']:
 				if any(kw in title.lower() for kw in self.keywords['neg']):
@@ -243,11 +245,13 @@ class Supreme(QObject):
 
 		url = '{}{}/add.json'.format(self.url_add_js, self.variant_id)
 		r = self.s.post(url, headers=self.headers, data=payload, proxies=proxy)
-		data = json.loads(r.text)
-		print(data)
+		data = r.json()
+		print(colored(data, "blue"))
+		print(colored(url, "red"))
 
 		if data:
-			if data[0]['in_stock']:
+			# if data[0]['in_stock']:
+			if data['cart'][0]['in_stock']:
 				# Successful
 				return True
 			else:

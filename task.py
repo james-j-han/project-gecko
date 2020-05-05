@@ -257,11 +257,15 @@ class Task(QThread):
 		elif self.store_name == 'https://www.shopdisney.com/':
 			self.store = Disney(self.search, self.qty, self.size, self.color, self.profile, self.billing)
 		elif self.store_name == 'https://www.supremenewyork.com/':
+			task_attributes = [self.task_type, self.keywords, self.qty, self.category, self.size, self.color, self.profile, self.billing]
+			print(colored(task_attributes, "green"))
 			self.store = Supreme(requests.Session(), self.task_type, None, self.keywords, self.qty, self.category, self.size, self.color, self.profile, self.billing)
 		else:
 			print('No matching store')
 
-		if self.store_name != 'https://www.supremenewyork.com/':
+		if self.store_name == 'https://www.supremenewyork.com/':
+			self.connect_signals_supreme()
+		else:
 			self.connect_signals()
 
 	def connect_signals(self):
@@ -270,6 +274,14 @@ class Task(QThread):
 		self.store.update_image.connect(self.update_image)
 		self.store.request_captcha.connect(lambda: self.request_captcha.emit(self.task_id))
 		self.store.poll_response.connect(lambda: self.poll_response.emit(self.task_id))
+
+	def connect_signals_supreme(self):
+		# self.store.update_product_image.connect(self.update_product_image)
+		# self.store.update_product_title.connect(lambda title: self.update_product_title.emit(title, self.widget_task_id))
+		# self.store.update_product_size.connect(lambda size: self.update_product_size.emit(size, self.widget_task_id))
+		# self.store.update_image.connect(self.update_image)
+		self.store.captcha_detected.connect(lambda: self.request_captcha.emit(self.task_id))
+		self.store.request_poll_token.connect(lambda: self.poll_response.emit(self.task_id))
 
 	def load_captcha(self):
 		self.captcha_window = QWebEngineView()
