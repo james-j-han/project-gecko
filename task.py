@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtCore, QtGui, QtWebEngineWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineProfile
 from PyQt5.QtNetwork import QNetworkCookie, QNetworkCookieJar
 
 from stores.store_shopify import Shopify
@@ -92,6 +92,8 @@ class Task(QThread):
 		self.solver_available = False
 		if not self.color:
 			self.color = 'N/A'
+
+		self.finished.connect(self.stop_task)
 
 		# image_start = QtGui.QPixmap('icons/icon_play.png')
 		image_stop = QtGui.QPixmap('src/icon_stop.png')
@@ -266,7 +268,11 @@ class Task(QThread):
 		self.store.poll_response.connect(lambda: self.poll_response.emit(self.task_id))
 
 	def load_captcha(self):
+		self.private_profile = QWebEngineProfile()
+		print(self.private_profile.isOffTheRecord())
+		self.private_page = QWebEnginePage(self.private_profile, self)
 		self.captcha_window = QWebEngineView()
+		self.captcha_window.setPage(self.private_page)
 		self.captcha_window.loadFinished.connect(self.render_captcha)
 		for cookie in self.store.cookies:
 			self.captcha_window.page().profile().cookieStore().setCookie(cookie)
@@ -470,7 +476,8 @@ class Task(QThread):
 		self.loading = False
 
 	def stop_task(self):
-		self.update_status.emit('Aborted', self.widget_task_id)
+		print(f'Stopping task')
+		# self.update_status.emit('Aborted', self.widget_task_id)
 		self.abort = True
 		self.solver_available = False
 		self.token = None
@@ -586,7 +593,6 @@ class Task(QThread):
 								self.countdown = self.delay
 								break
 					break
-
 
 		# while not self.abort:
 		# 	if self.delaying:

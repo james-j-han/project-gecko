@@ -171,8 +171,9 @@ def get_encrypted_card(public_key, card_number, key_id=None, ca=False):
 	print(number)
 	return number
 
-def post_webhook(title, store, link, price, qty, src, color='N/A', size='N/A'):
-	url = 'https://discordapp.com/api/webhooks/601232887219748874/tu1D8PBWC7STcVZ0nPArrvKiFoSVApLroINAOHC54a9SUA0XKKrE-DVj5TKw3JEF4_-P'
+def post_webhook(title, store, link, price, qty, src, color, size):
+	url = 'https://discordapp.com/api/webhooks/626625411295739904/c2tST5AbhPPon07yfPCW7e9gYJE-7CgqS-d1Cm5EgaQSl7hiNcc86zR0ebOvDHlKlE_z'
+	# url = 'https://discordapp.com/api/webhooks/601232887219748874/tu1D8PBWC7STcVZ0nPArrvKiFoSVApLroINAOHC54a9SUA0XKKrE-DVj5TKw3JEF4_-P'
 	t = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
 	payload = {
 		'username': 'Success',
@@ -215,7 +216,7 @@ def post_webhook(title, store, link, price, qty, src, color='N/A', size='N/A'):
 				'text': 'Powered by The Gecko App | @jayimshan',
 				'icon_url': 'https://i.imgur.com/E6zcSEY.png'
 			},
-			'timestamp': tuple
+			'timestamp': t
 		}]
 	}
 	requests.post(url, json=payload)
