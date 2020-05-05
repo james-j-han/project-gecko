@@ -105,24 +105,38 @@ class Disney(QObject):
 		if r.status_code == 200:
 			data = r.json()
 			print(data)
-			self.shipmentUUID = data['cart']['items'][0]['shipmentUUID']
-			print(f'shipmentUUID: {self.shipmentUUID}')
-			self.shipping_ID = data['cart']['shipments'][0]['selectedShippingMethod']
-			print(f'Shipping ID: {self.shipping_ID}')
-			self.title = data['cart']['items'][0]['productName']
-			self.update_title.emit(self.title)
-			print(f'TITLE: {self.title}')
-			self.price = data['cart']['items'][0]['price']['sales']['formatted']
-			print(f'PRICE: {self.price}')
-			self.src = data['cart']['items'][0]['images']['small'][0]['url']
-			self.update_image.emit(self.src)
-			print(f'SRC: {self.src}')
-			url = f'https://www.shopdisney.com/{self.pid}.html'
-			self.link = self.s.get(url, headers=self.headers, proxies=self.proxy).url
-			print(f'LINK: {self.link}')
-			return True
-		else:
-			print(r.text)
+			if not data['error']:
+				self.shipmentUUID = data['cart']['items'][0]['shipmentUUID']
+				print(f'shipmentUUID: {self.shipmentUUID}')
+				self.shipping_ID = data['cart']['shipments'][0]['selectedShippingMethod']
+				print(f'Shipping ID: {self.shipping_ID}')
+				self.title = data['cart']['items'][0]['productName']
+				self.update_title.emit(self.title)
+				print(f'TITLE: {self.title}')
+				self.price = data['cart']['items'][0]['price']['sales']['formatted']
+				print(f'PRICE: {self.price}')
+				self.src = data['cart']['items'][0]['images']['small'][0]['url']
+				self.update_image.emit(self.src)
+				print(f'SRC: {self.src}')
+				url = f'https://www.shopdisney.com/{self.pid}.html'
+				self.link = self.s.get(url, headers=self.headers, proxies=self.proxy).url
+				print(f'LINK: {self.link}')
+				return True
+			if data['isSoldOut']:
+				self.status = 'Out of stock'
+				self.update_status.emit(self.status)
+				print(self.status)
+				return False
+		elif r.status_code[:1] == 4:
+			self.status = 'Too many requests'
+			self.update_status.emit(self.status)
+			print(self.status)
+			time.sleep(5)
+		elif r.status_code[:1] == 5:
+			self.status = 'Server error'
+			self.update_status.emit(self.status)
+			print(self.status)
+			time.sleep(5)
 
 		self.staus = 'Error carting'
 		self.update_status.emit(self.status)
