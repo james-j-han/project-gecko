@@ -2,6 +2,8 @@ import queue
 import random
 import threading
 
+from termcolor import colored
+
 class Proxy:
 
 	def __init__(self, proxy_id=None, proxy_name='localhost', proxies=None):
@@ -53,7 +55,9 @@ class Proxy:
 		proxy = None
 		with self.lock:
 			print('GET Lock aquired')
-			proxy = self.seq_pool.get()
+			queue = self.seq_pool
+			if not queue.empty():
+				proxy = queue.get()
 			print('GET Lock release')
 		return proxy
 

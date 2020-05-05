@@ -1,8 +1,8 @@
 from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5 import QtCore, QtNetwork
 from bs4 import BeautifulSoup
-from webhook import Webhook
-from webpage import Webpage
+import webhooks
+from pywebcopy import WebPage
 
 import requests
 import random
@@ -10,6 +10,8 @@ import json
 import time
 import urllib.parse
 import threading
+
+from termcolor import colored
 
 class Supreme(QObject):
 
@@ -54,6 +56,7 @@ class Supreme(QObject):
 		self.shipping_code = None
 		self.checkout_price = None
 		self.sitekey = '6LeWwRkUAAAAAOBsau7KpuC9AV-6J8mhw4AjC3Xz'
+		self.variants = None
 
 		self.s = s
 		self.task_type = task_type
@@ -69,13 +72,19 @@ class Supreme(QObject):
 		self.size_emit = None
 		self.slug = None
 		
-		self.page = Webpage()
+		self.page = WebPage()
 		self.cookies = []
 		self.client_width = None
 		self.client_height = None
 		self.random_client_resolution()
 		self.waiting_for_captcha = False
 		self.abort = False
+
+		self.steps = [
+			self.search_all_products,
+			self.add_to_cart,
+			self.start_checkout
+		]
 
 		self.status = {
 			'search_all_products': False,
@@ -152,7 +161,7 @@ class Supreme(QObject):
 					# cache = r.headers['x-cache']
 					# print('cache: {}'.format(cache))
 					data = r.json()
-					# print(data)
+					# print(colored(data, "yellow"))
 
 					for category in data['products_and_categories']:
 						if self.abort:
@@ -160,7 +169,8 @@ class Supreme(QObject):
 						else:
 							if self.category.lower() == category.lower():
 								for p in data['products_and_categories']['{}'.format(self.category)]:
-									if self.search_for_product(p, proxy): return True
+									if self.search_for_product(p, proxy):
+										return True
 					return False
 				except requests.exceptions.ProxyError as e:
 					print('[EXCEPTION] {}'.format(e))

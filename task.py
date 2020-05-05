@@ -7,6 +7,7 @@ from stores.store_shopify import Shopify
 from stores.store_target import Target
 from stores.store_bestbuy import BestBuy
 from stores.store_disney import Disney
+from stores.store_supreme import Supreme
 from search import Search
 
 import time
@@ -14,6 +15,8 @@ import random
 import requests
 import threading
 import urllib
+
+from termcolor import colored
 
 class Task(QThread):
 
@@ -253,10 +256,13 @@ class Task(QThread):
 			self.store = BestBuy(self.search, self.qty, self.size, self.color, self.profile, self.billing)
 		elif self.store_name == 'https://www.shopdisney.com/':
 			self.store = Disney(self.search, self.qty, self.size, self.color, self.profile, self.billing)
+		elif self.store_name == 'https://www.supremenewyork.com/':
+			self.store = Supreme(requests.Session(), self.task_type, None, self.keywords, self.qty, self.category, self.size, self.color, self.profile, self.billing)
 		else:
 			print('No matching store')
 
-		self.connect_signals()
+		if self.store_name != 'https://www.supremenewyork.com/':
+			self.connect_signals()
 
 	def connect_signals(self):
 		self.store.update_status.connect(lambda message: self.update_status.emit(message, self.widget_task_id))
@@ -457,7 +463,7 @@ class Task(QThread):
 		self.abort = False
 		# Start task
 		with self.lock:
-			print('Starting task [{}][{}]'.format(self.task_id, self.task_name))
+			print(colored('Starting task [{}][{}]'.format(self.task_id, self.task_name), "green"))
 		self.gif.setFileName('gifs/running_4.gif')
 		self.gif.start()
 		self.countdown = 0
@@ -576,17 +582,20 @@ class Task(QThread):
 					self.get_proxy()
 					self.store.proxy = self.proxy
 					self.delay = self.get_retry_delay()
+
 					for step in self.store.steps:
 						if self.abort:
 							break
 						else:
-							if step():
+							result = step()
+							print(colored(result, "blue"))
+							if result:
 								continue
 							else:
 								self.countdown = self.delay
 								break
 					break
-
+		
 
 		# while not self.abort:
 		# 	if self.delaying:
