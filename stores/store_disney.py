@@ -129,16 +129,11 @@ class Disney(QObject):
 				return False
 		elif r.status_code[:1] == 4:
 			self.status = 'Too many requests'
-			self.update_status.emit(self.status)
-			print(self.status)
-			time.sleep(5)
 		elif r.status_code[:1] == 5:
 			self.status = 'Server error'
-			self.update_status.emit(self.status)
-			print(self.status)
-			time.sleep(5)
+		else:
+			self.status = 'Error carting'
 
-		self.staus = 'Error carting'
 		self.update_status.emit(self.status)
 		print(self.status)
 		return False
@@ -554,6 +549,7 @@ class Disney(QObject):
 			if r.status_code == 200:
 				data = r.json()
 				print(data)
+				self.commerce_ID = data['commerce_id']
 				return True
 			elif r.status_code == 429:
 				self.status = 'Too many requests'
@@ -562,6 +558,55 @@ class Disney(QObject):
 				time.sleep(5)
 
 		self.status = 'Error verifying order'
+		self.update_status.emit(self.status)
+		print(self.status)
+		return False
+
+	def checkout_submit_order(self):
+		url = 'https://www.shopdisney.com/on/demandware.store/Sites-shopDisney-Site/default/Checkout-SubmitOrder'
+		payment_details = '[{"paymentId":63388927,"cardDesc":"Visa","cardBrand":"VS","cardNumber":"xxxxxxxxxxxx8039","nameHolder":"James+Han","expirationMonth":9,"expirationYear":20,"address":{"countryName":"United+States","memberId":834013121,"addressId":595220879,"nickName":"1588710139338","firstName":"James","lastName":"Han","phone1":"+14709914999","address1":"2850+Arrow+Creek+Dr","city":"Atlanta","state":"GA","country":"US","zipCode":"30341-5008","type":"SB","isPrimary":0,"recommendations":[],"dayPhone":"+14709914999"},"type":"CC"}]'
+		payload = {
+			'dwfrm_billing_addressFields_firstName': self.profile.first_name,
+			'dwfrm_billing_addressFields_lastName': self.profile.last_name,
+			'dwfrm_billing_addressFields_address1': self.profile.billing_address,
+			'dwfrm_billing_addressFields_address2': self.profile.billing_address_2,
+			'dwfrm_billing_addressFields_country': 'US',
+			'dwfrm_billing_addressFields_states_stateCode': self.profile.billing_state,
+			'dwfrm_billing_addressFields_city': self.profile.billing_city,
+			'dwfrm_billing_addressFields_postalCode': self.profile.billing_zip,
+			'dwfrm_billing_paymentDetails': '',
+			'dwfrm_billing_commerceId': self.commerce_ID,
+			'dwfrm_billing_vcoWalletRefId': '',
+			'dwfrm_billing_creditCardFields_email': self.profile.email,
+			'dwfrm_billing_subscribe': 'on',
+			'g-recaptcha-response': self.g_recaptcha_response
+		}
+		r = self.s.post(url, headers=self.headers, data=payload, proxies=self.proxy)
+		print(r)
+		if r.status_code == 200:
+			data = r.json()
+			print(data)
+			self.order_number = data['orderID']
+			self.order_token = data['orderToken']
+			return True
+
+		self.status = 'Error submitting order'
+		self.update_status.emit(self.status)
+		print(self.status)
+		return False
+
+	def order_confirmation(self):
+		url = 'https://www.shopdisney.com/ocapi/cc/orderconfirmation'
+		payload = {
+			'order_number': self.order_number,
+			'order_token': self.order_token
+		}
+		r = self.s.post(url, headers=self.headers, data=payload, proxies=self.proxy)
+		print(r)
+		if r.status_code == 200:
+			return True
+
+		self.status = 'Error confirming order'
 		self.update_status.emit(self.status)
 		print(self.status)
 		return False
