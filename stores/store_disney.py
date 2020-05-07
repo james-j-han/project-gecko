@@ -32,6 +32,7 @@ class Disney(QObject):
 	def __init__(self, search, qty, size, color, profile, billing):
 		super().__init__()
 		self.s = requests.Session()
+		print(self.s)
 		self.proxy = None
 		self.pid = search
 		self.profile = profile
@@ -45,9 +46,7 @@ class Disney(QObject):
 		self.price = None
 		self.qty = qty
 		self.color = color
-		print(self.color)
 		self.size = size
-		print(self.size)
 
 		# self.pid = '427245425113'
 		# self.pid = '465055829394'
@@ -116,7 +115,7 @@ class Disney(QObject):
 				self.price = data['cart']['items'][0]['price']['sales']['formatted']
 				print(f'PRICE: {self.price}')
 				self.src = data['cart']['items'][0]['images']['small'][0]['url']
-				self.update_image.emit(self.src)
+				# self.update_image.emit(self.src)
 				print(f'SRC: {self.src}')
 				url = f'https://www.shopdisney.com/{self.pid}.html'
 				self.link = self.s.get(url, headers=self.headers, proxies=self.proxy).url

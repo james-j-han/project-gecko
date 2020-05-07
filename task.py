@@ -94,6 +94,7 @@ class Task(QThread):
 			self.color = 'N/A'
 
 		self.finished.connect(self.stop_task)
+		self.init_store()
 
 		# image_start = QtGui.QPixmap('icons/icon_play.png')
 		image_stop = QtGui.QPixmap('src/icon_stop.png')
@@ -311,6 +312,7 @@ class Task(QThread):
 		if data:
 			self.store.g_recaptcha_response = data
 
+	# Issue with multiple streams. Multiple tasks will crash with this function.
 	def update_image(self):
 		url_data = urllib.request.urlopen(self.store.src).read()
 		self.image_original.loadFromData(url_data)

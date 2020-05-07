@@ -24,7 +24,7 @@ class Stylesheet:
 		stylesheet = f'''
 		* {{
 			font-size: 14px;
-			font-family: 'Century Gothic';
+			font-family: 'Montserrat';
 		}}
 		QMainWindow {{
 			background-color: {background_color};
