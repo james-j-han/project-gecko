@@ -585,7 +585,7 @@ class Task(QThread):
 					self.get_proxy()
 					self.store.proxy = self.proxy
 					self.delay = self.get_retry_delay()
-					for step in self.store.steps:
+					for step in self.store.steps[self.store.current_step:]:
 						if self.abort:
 							break
 						else:
