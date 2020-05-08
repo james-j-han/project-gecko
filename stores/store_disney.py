@@ -33,7 +33,6 @@ class Disney(QObject):
 	def __init__(self, search, qty, size, color, profile, billing):
 		super().__init__()
 		self.s = requests.Session()
-		print(self.s)
 		self.proxy = None
 		self.pid = search
 		self.profile = profile

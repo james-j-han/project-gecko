@@ -18,6 +18,7 @@ import urllib
 class Task(QThread):
 
 	update_status = pyqtSignal(str, QtWidgets.QTableWidgetItem)
+	update_delay = pyqtSignal(str, QtWidgets.QTableWidgetItem)
 	# update_proxy = pyqtSignal(str, QtWidgets.QTableWidgetItem)
 	update_proxy_label = pyqtSignal(int)
 	product_updated = pyqtSignal(str, QtWidgets.QTableWidgetItem)
@@ -158,7 +159,7 @@ class Task(QThread):
 		# self.widget_task_name.setLayout(layout)
 
 		# QTimer
-		self.interval = 50
+		self.interval = 21
 		self.timer = QtCore.QTimer()
 		self.timer.setTimerType(QtCore.Qt.PreciseTimer)
 		self.timer.timeout.connect(self.update_loop)
@@ -579,6 +580,7 @@ class Task(QThread):
 				break
 			else:
 				if self.countdown > 0:
+					self.update_delay.emit(f'{self.countdown} ms', self.widget_task_id)
 					self.msleep(self.interval)
 					self.countdown -= self.interval
 				else:
@@ -595,214 +597,3 @@ class Task(QThread):
 								self.countdown = self.delay
 								break
 						break
-
-		# while not self.abort:
-		# 	if self.delaying:
-		# 		self.msleep(self.interval)
-		# 	else:
-		# 		self.get_proxy()
-		# 		self.store.proxy = self.proxy
-		# 		self.delay = self.get_retry_delay()
-		# 		for step in self.store.steps:
-		# 			if self.abort:
-		# 				break
-		# 			else:
-		# 				# self.load_browser.emit(self.task_id)
-		# 				# self.render_browser()
-		# 				# self.loading = True
-		# 				# while self.loading:
-		# 				# 	self.msleep(self.interval)
-		# 				if step():
-		# 					continue
-		# 				else:
-		# 					self.countdown = self.delay
-		# 					self.delaying = True
-		# 					break
-
-		# while not self.store.status['checkout_successful']:
-		# 	# self.label_image.clear()
-		# 	# self.widget_product.setText('')
-		# 	# self.widget_size.setText('')
-		# 	while self.delaying:
-		# 		self.msleep(self.interval)
-
-		# 	if self.abort:
-		# 		break
-
-		# 	self.get_proxy()
-		# 	self.store.proxy = self.proxy
-			
-		# 	with self.lock:
-		# 		print('Task [{}][{}] proxy: {}'.format(self.task_id, self.task_name, self.proxy['https']))
-		# 	self.update_proxy()
-		# 	self.update_proxy_label.emit(self.task_id)
-		# 	self.delay = self.get_retry_delay()
-		# 	with self.lock:
-		# 		print('Task [{}][{}] delay: {}'.format(self.task_id, self.task_name, self.delay))
-		# 	start = time.time()
-		# 	while not self.store.status['checkout_successful']:
-		# 		if self.abort:
-		# 			break
-		# 		else:
-		# 		# try:
-		# 			# Captcha
-		# 			if self.store.status['captcha_detected']:
-		# 				self.update_status.emit('Waiting for captcha', self.widget_task_id)
-		# 				while self.token is None:
-		# 					if self.abort:
-		# 						break
-		# 					else:
-		# 						if not self.solver_available:
-		# 							self.solver_available = True
-		# 							print('Emitting request for captcha')
-		# 							self.request_captcha.emit(self.task_id, self.store.checkout_url)
-		# 					self.custom_delay(500, p=False)
-
-		# 				if self.abort:
-		# 					break
-		# 				else:
-		# 					self.store.token = self.token
-		# 					self.token = None
-		# 					self.store.status['captcha_detected'] = False
-		# 			# Render javascript
-		# 			# if self.store.status['render_html']:
-		# 			# 	pass
-		# 			# Main task loop
-		# 			if self.store.status['search_all_products']:
-		# 				if self.store.status['add_to_cart']:
-		# 					if self.store.status['start_checkout']:
-		# 						if self.store.status['submit_info']:
-		# 							if self.store.status['submit_shipping']:
-		# 								if self.store.status['submit_payment']:
-		# 									if self.store.verify_checkout():
-		# 										end = time.time()
-		# 										duration = round(end - start, 3)
-		# 										self.update_status.emit('Checkout success [{} seconds]'.format(duration), self.widget_task_id)
-		# 										# self.update_log.emit('Task [{}] checkout success'.format(self.task_name))
-		# 										self.store.status['checkout_successful'] = True
-		# 										self.abort = True
-		# 										break
-		# 									else:
-		# 										# self.update_status.emit('Verifying checkout', self.widget_task_id)
-		# 										# self.update_log.emit('Task [{}] verifying checkout'.format(self.task_name))
-		# 										self.store.status['checkout_successful'] = False
-		# 										self.update_log.emit('Task [{}] retrying in [{}] milliseconds'.format(self.task_name, self.delay))
-		# 										# self.msleep(delay)
-		# 										# self.custom_delay(self.delay)
-		# 										self.countdown = self.delay
-		# 										self.delaying = True
-		# 										break
-		# 								else:
-		# 									# self.update_status.emit('Submitting payment', self.widget_task_id)
-		# 									# self.update_log.emit('Task [{}] submitting payment'.format(self.task_name))
-		# 									if self.store.submit_payment():
-		# 										self.store.status['submit_payment'] = True
-		# 									else:
-		# 										self.store.status['submit_payment'] = False
-		# 										self.store.status['submit_shipping'] = False
-		# 										self.store.status['submit_info'] = False
-		# 										self.store.status['start_checkout'] = False
-		# 										self.store.status['add_to_cart'] = False
-		# 										self.store.status['search_all_products'] = False
-		# 										# self.update_status.emit('Payment error', self.widget_task_id)
-		# 										self.update_log.emit('Task [{}] retrying in [{}] milliseconds'.format(self.task_name, self.delay))
-		# 										# self.msleep(delay)
-		# 										# self.custom_delay(self.delay)
-		# 										self.countdown = self.delay
-		# 										self.delaying = True
-		# 										break
-		# 							else:
-		# 								# self.update_status.emit('Submitting shipping', self.widget_task_id)
-		# 								# self.update_log.emit('Task [{}] submitting shipping'.format(self.task_name))
-		# 								if self.store.submit_shipping():
-		# 									self.store.status['submit_shipping'] = True
-		# 								else:
-		# 									self.store.status['submit_shipping'] = False
-		# 									self.store.status['submit_info'] = False
-		# 									self.store.status['start_checkout'] = False
-		# 									self.store.status['add_to_cart'] = False
-		# 									self.store.status['search_all_products'] = False
-		# 									# self.update_status.emit('Shipping error', self.widget_task_id)
-		# 									self.update_log.emit('Task [{}] retrying in [{}] milliseconds'.format(self.task_name, self.delay))
-		# 									# self.msleep(delay)
-		# 									# self.custom_delay(self.delay)
-		# 									self.countdown = self.delay
-		# 									self.delaying = True
-		# 									break
-		# 						else:
-		# 							# self.update_status.emit('Submitting information', self.widget_task_id)
-		# 							# self.update_log.emit('Task [{}] submitting information'.format(self.task_name))
-		# 							if self.store.submit_info():
-		# 								self.store.status['submit_info'] = True
-		# 							else:
-		# 								self.store.status['submit_info'] = False
-		# 								self.store.status['start_checkout'] = False
-		# 								self.store.status['add_to_cart'] = False
-		# 								self.store.status['search_all_products'] = False
-		# 								# self.update_status.emit('Information error', self.widget_task_id)
-		# 								self.update_log.emit('Task [{}] retrying in [{}] milliseconds'.format(self.task_name, self.delay))
-		# 								# self.msleep(delay)
-		# 								# self.custom_delay(self.delay)
-		# 								self.countdown = self.delay
-		# 								self.delaying = True
-		# 								break
-		# 					else:
-		# 						# self.update_status.emit('Starting checkout', self.widget_task_id)
-		# 						# self.update_log.emit('Task [{}] starting checkout'.format(self.task_name))
-		# 						if self.store.start_checkout():
-		# 							self.store.status['start_checkout'] = True
-		# 						else:
-		# 							self.store.status['start_checkout'] = False
-		# 							self.store.status['add_to_cart'] = False
-		# 							self.store.status['search_all_products'] = False
-		# 							self.update_log.emit('Task [{}] retrying in [{}] milliseconds'.format(self.task_name, self.delay))
-		# 							# self.msleep(delay)
-		# 							# self.custom_delay(self.delay)
-		# 							self.countdown = self.delay
-		# 							self.delaying = True
-		# 							break
-		# 				else:
-		# 					# self.update_status.emit('Adding to cart', self.widget_task_id)
-		# 					# self.update_log.emit('Task [{}] adding to cart'.format(self.task_name))
-		# 					if self.store.add_to_cart():
-		# 						# self.update_status.emit('Carted', self.widget_task_id)
-		# 						# self.update_log.emit('Task [{}] carted'.format(self.task_name))
-		# 						self.store.status['add_to_cart'] = True
-		# 					else:
-		# 						# self.update_status.emit('Could not cart', self.widget_task_id)
-		# 						# self.update_log.emit('Task [{}] could not cart'.format(self.task_name))
-		# 						self.store.status['add_to_cart'] = False
-		# 						self.store.status['search_all_products'] = False
-		# 						self.update_log.emit('Task [{}] retrying in [{}] milliseconds'.format(self.task_name, self.delay))
-		# 						# self.msleep(delay)
-		# 						# self.custom_delay(self.delay)
-		# 						self.countdown = self.delay
-		# 						self.delaying = True
-		# 						break
-		# 			else:
-		# 				# self.update_status.emit('Searching for product', self.widget_task_id)
-		# 				# self.update_log.emit('Task [{}] searching for product'.format(self.task_name))
-		# 				if self.store.search_all_products():
-		# 					self.store.status['search_all_products'] = True
-		# 				else:
-		# 					self.store.status['search_all_products'] = False
-		# 					self.update_log.emit('Task [{}] retrying in [{}] milliseconds'.format(self.task_name, self.delay))
-		# 					with self.lock:
-		# 						print('Task [{}][{}] retrying in [{}] milliseconds'.format(self.task_id, self.task_name, self.delay))
-		# 					# self.msleep(delay)
-		# 					# self.custom_delay(self.delay)
-		# 					self.countdown = self.delay
-		# 					self.delaying = True
-		# 					break
-		# 		# except Exception as e:
-		# 		# 	with self.lock:
-		# 		# 		print('[ERROR]: {}'.format(e))
-		# 		# 		# with open('main.txt', mode='a') as f:
-		# 		# 		# 	f.write('{}\n'.format(e))
-		# 		# 	self.abort = True
-		# 		# 	self.update_status.emit('Aborted: Fatal error', self.widget_task_id)
-		# 		# 	self.update_log.emit('Task [{}] [ERROR]: {}'.format(self.task_name, e))
-		# 		# 	break
-		# 		# finally:
-		# 		# 	with self.lock:
-		# 		# 		print('Task [{}][{}] looping'.format(self.task_id, self.task_name))
