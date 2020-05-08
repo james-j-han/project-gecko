@@ -9,6 +9,7 @@ import time
 
 import gecko_utils
 
+# VERSION 1.0
 class Disney(QObject):
 
 	update_status = pyqtSignal(str)
@@ -133,9 +134,6 @@ class Disney(QObject):
 				return True
 			if data['isSoldOut']:
 				self.status = 'Out of stock'
-				self.update_status.emit(self.status)
-				print(self.status)
-				return False
 		elif r.status_code[0] == 4:
 			self.status = 'Too many requests'
 		elif r.status_code[0] == 5:
@@ -446,7 +444,7 @@ class Disney(QObject):
 			self.commerce_ID = data['commerce_id']
 			return True
 		elif r.status_code[0] == 4:
-			if r.status_code == 401
+			if r.status_code == 401:
 				self.status = 'Unauthorized'
 			elif r.status_code == 429:
 				self.status = 'Too many requests'
@@ -572,6 +570,7 @@ class Disney(QObject):
 			data = r.json()
 			print(data)
 			self.commerce_ID = data['commerceId']
+			self.payment_details = data['orders'][0]['payments']
 			return True
 		elif r.status_code[0] == 4:
 			if r.status_code == 429:
@@ -635,7 +634,7 @@ class Disney(QObject):
 		self.update_status.emit(self.status)
 		print(self.status)
 		url = 'https://www.shopdisney.com/on/demandware.store/Sites-shopDisney-Site/default/Checkout-SubmitOrder'
-		payment_details = '[{"paymentId":63388927,"cardDesc":"Visa","cardBrand":"VS","cardNumber":"xxxxxxxxxxxx8039","nameHolder":"James+Han","expirationMonth":9,"expirationYear":20,"address":{"countryName":"United+States","memberId":834013121,"addressId":595220879,"nickName":"1588710139338","firstName":"James","lastName":"Han","phone1":"+14709914999","address1":"2850+Arrow+Creek+Dr","city":"Atlanta","state":"GA","country":"US","zipCode":"30341-5008","type":"SB","isPrimary":0,"recommendations":[],"dayPhone":"+14709914999"},"type":"CC"}]'
+		# payment_details = f'[{{"paymentId":{self.payment_ID},"cardDesc":"{self.billing.card_type}","cardBrand":"VS","cardNumber":"xxxxxxxxxxxx{self.billing.card_number[12:]}","nameHolder":"{self.billing.name_on_card}","expirationMonth":{self.billing.exp_month},"expirationYear":{self.billing.exp_year},"address":{{"countryName":"United+States","memberId":834013121,"addressId":595220879,"nickName":"1588710139338","firstName":"James","lastName":"Han","phone1":"+1{self.profile.phone}","address1":"2850+Arrow+Creek+Dr","city":"Atlanta","state":"GA","country":"US","zipCode":"30341-5008","type":"SB","isPrimary":0,"recommendations":[],"dayPhone":"+1{self.profile.phone}"}},"type":"CC"}}]'
 		payload = {
 			'dwfrm_billing_addressFields_firstName': self.profile.first_name,
 			'dwfrm_billing_addressFields_lastName': self.profile.last_name,
@@ -672,7 +671,7 @@ class Disney(QObject):
 			self.status = 'Server error'
 		else:
 			self.status = 'Error submitting order'
-\
+
 		self.update_status.emit(self.status)
 		print(self.status)
 		return False
