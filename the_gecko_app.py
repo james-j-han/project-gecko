@@ -211,7 +211,8 @@ class GUI(QtWidgets.QMainWindow):
 			'https://www.hyperxgaming.com/',
 			'https://www.shopdisney.com/',
 			'https://www.supremenewyork.com/',
-			'https://www.target.com/'
+			'https://www.target.com/',
+			'https://www.walmart.com/'
 		]
 
 		self.ui.combo_box_store.addItem(self.stores[0], 'nk')
@@ -222,6 +223,7 @@ class GUI(QtWidgets.QMainWindow):
 		self.ui.combo_box_store.addItem(self.stores[5], 'nv')
 		self.ui.combo_box_store.addItem(self.stores[6], 'nk')
 		self.ui.combo_box_store.addItem(self.stores[7], 'nv')
+		self.ui.combo_box_store.addItem(self.stores[8], 'nd')
 
 		self.fallback_sitekeys = {
 			'https://shop.funko.com/': '6LeoeSkTAAAAAA9rkZs5oS82l69OEYjKRZAiKdaF',

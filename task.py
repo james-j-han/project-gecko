@@ -7,6 +7,8 @@ from stores.store_shopify import Shopify
 from stores.store_target import Target
 from stores.store_bestbuy import BestBuy
 from stores.store_disney import Disney
+from stores.store_hyperxgaming import HyperXGaming
+from stores.store_walmart import Walmart
 from search import Search
 
 import time
@@ -257,6 +259,10 @@ class Task(QThread):
 			self.store = BestBuy(self.search, self.qty, self.size, self.color, self.profile, self.billing)
 		elif self.store_name == 'https://www.shopdisney.com/':
 			self.store = Disney(self.search, self.qty, self.size, self.color, self.profile, self.billing)
+		elif self.store_name == 'https://www.hyperxgaming.com/':
+			self.store = HyperXGaming(self.search, self.qty, self.size, self.color, self.profile, self.billing)
+		elif self.store_name == 'https://www.walmart.com/':
+			self.store = Walmart(self.search, self.qty, self.size, self.color, self.profile, self.billing)
 		else:
 			print('No matching store')
 
@@ -580,7 +586,7 @@ class Task(QThread):
 				break
 			else:
 				if self.countdown > 0:
-					self.update_delay.emit(f'{self.countdown} ms', self.widget_task_id)
+					# self.update_delay.emit(f'{self.countdown} ms', self.widget_task_id)
 					self.msleep(self.interval)
 					self.countdown -= self.interval
 				else:
@@ -592,8 +598,13 @@ class Task(QThread):
 							break
 						else:
 							if step():
-								continue
+								if step == self.store.steps[-1]:
+									pass
+								else:
+									continue
 							else:
 								self.countdown = self.delay
 								break
+
+						self.abort = True
 						break
