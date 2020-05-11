@@ -2,7 +2,8 @@ from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5 import QtCore, QtNetwork
 from bs4 import BeautifulSoup
 import webhooks
-from pywebcopy import WebPage
+from pywebcopy import WebPage, save_website
+# from webpage import Webpage
 
 import requests
 import random
@@ -61,6 +62,7 @@ class Supreme(QObject):
 		self.s = s
 		self.task_type = task_type
 		self.captcha_logic = captcha_logic
+		self.captcha_url = 'https://www.supremenewyork.com/checkout'
 		self.keywords = keywords
 		self.qty = qty
 		self.category = category
@@ -83,7 +85,10 @@ class Supreme(QObject):
 		self.steps = [
 			self.search_all_products,
 			self.add_to_cart,
-			self.start_checkout
+			self.render_page,
+			self.start_checkout,
+			self.submit_payment,
+			self.verify_checkout
 		]
 
 		self.status = {
@@ -129,25 +134,29 @@ class Supreme(QObject):
 				if self.abort:
 					break
 				else:
-					print('Polling for token')
+					print('Polling for token - soup is none')
 					self.request_poll_token.emit()
 					time.sleep(0.5)
 		else:
-			if self.captcha_logic == QtCore.Qt.Unchecked:
-				print('Ignoring captcha')
-			elif self.captcha_logic == QtCore.Qt.PartiallyChecked or self.captcha_logic == QtCore.Qt.Checked:
-				captcha = soup.find('textarea', id='g-recaptcha-response')
-				if captcha:
-					self.captcha_detected.emit()
-					self.waiting_for_captcha = True
-					while self.waiting_for_captcha:
-						print('Polling for token')
-						self.request_poll_token.emit()
-						time.sleep(0.5)
-				else:
-					print("No captcha detected")
-			else:
-				print('Error with logic')
+			captcha = soup.find_all("div", class_= "g-recaptcha")
+			something_else = soup.find_all("div", class_="payment")
+			print(colored(captcha, "blue"))
+			print(colored(something_else, "blue"))
+			# if self.captcha_logic == QtCore.Qt.Unchecked:
+			# 	print('Ignoring captcha')
+			# elif self.captcha_logic == QtCore.Qt.PartiallyChecked or self.captcha_logic == QtCore.Qt.Checked:
+			# 	captcha = soup.find('textarea', id='g-recaptcha-response')
+			# 	if captcha:
+			# 		self.captcha_detected.emit()
+			# 		self.waiting_for_captcha = True
+			# 		while self.waiting_for_captcha:
+			# 			print('Polling for token')
+			# 			self.request_poll_token.emit()
+			# 			time.sleep(0.5)
+			# 	else:
+			# 		print("No captcha detected")
+			# else:
+			# 	print('Error with logic')
 
 	# Get all products
 	def search_all_products(self, proxy=None):
@@ -261,7 +270,10 @@ class Supreme(QObject):
 			return False
 
 	def start_checkout(self, proxy=None):
-		self.detect_captcha()
+		# save_website(url=self.captcha_url, project_folder='.')
+		print(colored(requests.get(self.captcha_url).text, "green"))
+		soup = BeautifulSoup(requests.get(self.captcha_url).text, 'html.parser')
+		self.detect_captcha(soup)
 		return True
 
 	def submit_info(self, proxy=None):

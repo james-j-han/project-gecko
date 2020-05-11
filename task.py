@@ -276,10 +276,11 @@ class Task(QThread):
 		self.store.poll_response.connect(lambda: self.poll_response.emit(self.task_id))
 
 	def connect_signals_supreme(self):
-		# self.store.update_product_image.connect(self.update_product_image)
-		# self.store.update_product_title.connect(lambda title: self.update_product_title.emit(title, self.widget_task_id))
+		self.store.update_product_image.connect(self.update_product_image)
+		self.store.update_product_title.connect(lambda title: self.update_title.emit(title, self.widget_task_id))
 		# self.store.update_product_size.connect(lambda size: self.update_product_size.emit(size, self.widget_task_id))
-		# self.store.update_image.connect(self.update_image)
+		# self.store.update_task_status.connect(lambda task_status: self.update_task_status.emit(task_status, self.widget_task_id))
+		# self.store.update_task_log.connect(lambda task_log: self.update_task_log.emit(task_log, self.widget_task_id))
 		self.store.captcha_detected.connect(lambda: self.request_captcha.emit(self.task_id))
 		self.store.request_poll_token.connect(lambda: self.poll_response.emit(self.task_id))
 
@@ -305,12 +306,32 @@ class Task(QThread):
 			}}
 		}}, 100);
 		'''
-		self.captcha_window.page().runJavaScript(script, self.div_call)
+		script_supreme = '''
+		var loop = setInterval(function() {{
+			if (document.getElementById('g-recaptcha') === null) {{
+				
+			}} else {{
+				var d = document.getElementById('g-recaptcha');
+				document.body.innerHTML = '';
+				document.body.appendChild(d);
+				clearInterval(loop);
+			}}
+		}}, 100);
+		'''
+
+		if self.store_name == 'https://www.supremenewyork.com/':
+			self.captcha_window.page().runJavaScript(script_supreme, self.div_call)
+		else:
+			self.captcha_window.page().runJavaScript(script, self.div_call)
 
 	def div_call(self, data):
 		script = "document.getElementById('g-recaptch');"
+		script_supreme = "document.getElementById('g-recaptcha');"
 		# script = 'd.reset();'
-		self.captcha_window.page().runJavaScript(script)
+		if self.store_name == 'https://www.supremenewyork.com/':
+			self.captcha_window.page().runJavaScript(script_supreme)
+		else:
+			self.captcha_window.page().runJavaScript(script)
 
 	def check_response(self):
 		script = '''
@@ -595,12 +616,14 @@ class Task(QThread):
 					self.store.proxy = self.proxy
 					self.delay = self.get_retry_delay()
 
+					step_count = 1
 					for step in self.store.steps:
 						if self.abort:
 							break
 						else:
 							result = step()
-							print(colored(result, "blue"))
+							print(colored(str(step_count) + ': ' + str(result), "blue"))
+							step_count += 1
 							if result:
 								continue
 							else:
