@@ -9,6 +9,7 @@ import time
 
 import gecko_utils
 
+# VERSION 1.0
 class Disney(QObject):
 
 	update_status = pyqtSignal(str)
@@ -33,7 +34,7 @@ class Disney(QObject):
 		super().__init__()
 		self.s = requests.Session()
 		self.proxy = None
-		self.sku = search
+		self.pid = search
 		self.profile = profile
 		self.billing = billing
 
@@ -48,9 +49,9 @@ class Disney(QObject):
 		self.size = size
 
 		# self.pid = '427245425113'
-		self.pid = '465055829394'
-		self.qty = '1'
-		self.category = 'accessories-women-jewelry+%26+watches'
+		# self.pid = '465055829394'
+		# self.qty = '1'
+		# self.category = 'accessories-women-jewelry+%26+watches'
 
 		self.abort = False
 		self.shipmentUUID = None
@@ -70,6 +71,8 @@ class Disney(QObject):
 
 		self.status = 'Ready'
 
+		self.current_step = 0
+
 		self.steps = [
 			self.add_to_cart,
 			self.validate_basket,
@@ -85,45 +88,73 @@ class Disney(QObject):
 			self.submit_payment,
 			self.get_order,
 			self.verify_order,
+			self.checkout_submit_order,
+			self.order_confirmation,
 			self.submit_webhook
 		]
 
 	def add_to_cart(self):
+		self.current_step = 0
 		self.status = 'Adding to cart'
 		self.update_status.emit(self.status)
 		print(self.status)
 		url = 'https://www.shopdisney.com/on/demandware.store/Sites-shopDisney-Site/default/Cart-AddProduct'
 		payload = {
 			'pid': self.pid,
-			'quantity': self.qty,
-			'productGuestCategory': self.category
+			'quantity': self.qty
+			# 'productGuestCategory': self.category
 		}
-		r = self.s.post(url, headers=self.headers, data=payload)
+		try:
+			r = self.s.post(url, headers=self.headers, data=payload, proxies=self.proxy)
+		except Exception as e:
+			print(f'{e}')
+			return False
+
 		print(r)
 		if r.status_code == 200:
 			data = r.json()
 			print(data)
-			self.shipmentUUID = data['cart']['items'][0]['shipmentUUID']
-			print(f'shipmentUUID: {self.shipmentUUID}')
-			self.shipping_ID = data['cart']['shipments'][0]['selectedShippingMethod']
-			print(f'Shipping ID: {self.shipping_ID}')
-			self.title = data['cart']['items'][0]['productName']
-			self.price = data['cart']['items'][0]['price']['sales']['formatted']
-			self.src = data['cart']['items'][0]['images']['small'][0]['url']
-			return True
+			if data['quantityTotal'] > 0:
+				self.shipmentUUID = data['cart']['items'][0]['shipmentUUID']
+				print(f'shipmentUUID: {self.shipmentUUID}')
+				self.shipping_ID = data['cart']['shipments'][0]['selectedShippingMethod']
+				print(f'Shipping ID: {self.shipping_ID}')
+				self.title = data['cart']['items'][0]['productName']
+				self.update_title.emit(self.title)
+				print(f'TITLE: {self.title}')
+				self.price = data['cart']['items'][0]['price']['sales']['formatted']
+				print(f'PRICE: {self.price}')
+				self.src = data['cart']['items'][0]['images']['small'][0]['url']
+				# self.update_image.emit(self.src)
+				print(f'SRC: {self.src}')
+				url = f'https://www.shopdisney.com/{self.pid}.html'
+				self.link = self.s.get(url, headers=self.headers, proxies=self.proxy).url
+				print(f'LINK: {self.link}')
+				return True
+			if data['isSoldOut']:
+				self.status = 'Out of stock'
+		elif r.status_code[0] == 4:
+			self.status = 'Too many requests'
+		elif r.status_code[0] == 5:
+			self.status = 'Server error'
 		else:
-			print(r.text)
+			self.status = 'Error carting'
 
-		self.staus = 'Error carting'
 		self.update_status.emit(self.status)
 		print(self.status)
 		return False
 
 	def validate_basket(self):
+		self.current_step = 1
 		self.status = 'Validating basket'
 		print(self.status)
 		url = 'https://www.shopdisney.com/my-bag?validateBasket=1'
-		r = self.s.get(url, headers=self.headers)
+		try:
+			r = self.s.get(url, headers=self.headers, proxies=self.proxy)
+		except Exception as e:
+			print(f'{e}')
+			return False
+
 		print(r)
 		if r.status_code == 200:
 			data = r.json()
@@ -133,10 +164,16 @@ class Disney(QObject):
 		return False
 
 	def validate_checkout(self):
+		self.current_step = 2
 		self.status = 'Validating checkout'
 		print(self.status)
 		url = 'https://www.shopdisney.com/ocapi/cc/checkout?validateCheckout=1'
-		r = self.s.get(url, headers=self.headers)
+		try:
+			r = self.s.get(url, headers=self.headers, proxies=self.proxy)
+		except Exception as e:
+			print(f'{e}')
+			return False
+
 		print(r)
 		if r.status_code == 200:
 			data = r.json()
@@ -146,20 +183,24 @@ class Disney(QObject):
 		return False
 
 	def start_checkout(self):
+		self.current_step = 3
 		self.status = 'Starting checkout'
 		self.update_status.emit(self.status)
 		print(self.status)
 		# url = 'https://www.shopdisney.com/checkout'
 		url = 'https://www.shopdisney.com/checkout?stage=shipping'
-		r = self.s.get(url, headers=self.headers)
+		try:
+			r = self.s.get(url, headers=self.headers, proxies=self.proxy)
+		except Exception as e:
+			print(f'{e}')
+			return False
+
 		print(r)
 		if r.status_code == 200:
 			soup = BeautifulSoup(r.text, 'lxml')
 			self.csrf_token = soup.find('input', {'name': 'csrf_token'})['value']
 			print(f'CSRF TOKEN: {self.csrf_token}')
 			return True
-		else:
-			pass
 
 		self.status = 'Error starting checkout'
 		self.update_status.emit(self.status)
@@ -167,6 +208,7 @@ class Disney(QObject):
 		return False
 
 	def submit_shipping(self):
+		self.current_step = 4
 		self.status = 'Submitting shipping'
 		self.update_status.emit(self.status)
 		print(self.status)
@@ -186,23 +228,36 @@ class Disney(QObject):
 			'shippingMethod': self.shipping_ID,
 			'csrf_token': self.csrf_token
 		}
-		r = self.s.post(url, headers=self.headers, data=payload)
+		try:
+			r = self.s.post(url, headers=self.headers, data=payload, proxies=self.proxy)
+		except Exception as e:
+			print(f'{e}')
+			return False
+
 		print(r)
 		if r.status_code == 200:
 			data = r.json()
 			print(data)
-			self.total_price = data['order']['totals']['grandTotalValue']
-			print(self.total_price)
+			self.total_price = data['order']['totals']['grandTotal'].strip('$')
+			print(f'CHECKOUT PRICE: {self.total_price}')
 			return True
+		elif r.status_code[0] == 4:
+			if r.status_code == 429:
+				self.status = 'Too many requests'
+			else:
+				# Add descriptive 400 error status coeds
+				pass
+		elif r.status_code[0] == 5:
+			self.status = 'Transmission problem'
 		else:
-			print(r.text)
+			self.status = 'Error submitting shipping'
 
-		self.status = 'Error submitting shipping'
 		self.update_status.emit(self.status)
 		print(self.status)
 		return False
 
 	def captcha(self):
+		self.current_step = 5
 		self.status = 'Waiting for captcha'
 		self.update_status.emit(self.status)
 		print(self.status)
@@ -230,6 +285,7 @@ class Disney(QObject):
 					return True
 
 	def google_recaptcha(self):
+		self.current_step = 6
 		self.status = 'Google recaptcha'
 		self.update_status.emit(self.status)
 		print(self.status)
@@ -251,7 +307,12 @@ class Disney(QObject):
 		}
 		h = self.headers
 		h['content-type'] = 'application/x-www-form-urlencoded'
-		r = self.s.post(url, headers=h, data=payload)
+		try:
+			r = self.s.post(url, headers=h, data=payload, proxies=self.proxy)
+		except Exception as e:
+			print(f'{e}')
+			return False
+
 		print(r)
 		if r.status_code == 200:
 			data = r.json()
@@ -264,6 +325,7 @@ class Disney(QObject):
 		return False
 
 	def checkout_validate_basket(self):
+		self.current_step = 7
 		self.status = 'Validating basket'
 		self.update_status.emit(self.status)
 		print(self.status)
@@ -286,7 +348,12 @@ class Disney(QObject):
 		h = self.headers
 		h['referer'] = 'https://www.shopdisney.com/checkout?stage=payment'
 		h['TE'] = 'Trailers'
-		r = self.s.post(url, headers=h, data=payload)
+		try:
+			r = self.s.post(url, headers=h, data=payload, proxies=self.proxy)
+		except Exception as e:
+			print(f'{e}')
+			return False
+
 		print(r)
 		if r.status_code == 200:
 			data = r.json()
@@ -294,13 +361,20 @@ class Disney(QObject):
 			self.order_number = data['orderID']
 			print(f'ORDER ID: {self.order_number}')
 			return True
+		elif r.status_code[0] == 4:
+			if r.status_code == 429:
+				self.status == 'Too many requests'
+		elif r.status_code[0] == 5:
+			self.status == 'Server error'
+		else:
+			self.status = 'Error validating basket'
 
-		self.status = 'Error validating basket'
 		self.update_status.emit(self.status)
 		print(self.status)
 		return False
 
 	def auth_token(self):
+		self.current_step = 8
 		self.status = 'Auth token'
 		self.update_status.emit(self.status)
 		print(self.status)
@@ -310,7 +384,12 @@ class Disney(QObject):
 			'grant_type': 'assertion',
 			'assertion_type': 'public'
 		}
-		r = self.s.post(url, headers=self.headers, data=payload)
+		try:
+			r = self.s.post(url, headers=self.headers, data=payload, proxies=self.proxy)
+		except Exception as e:
+			print(f'{e}')
+			return False
+
 		print(r)
 		if r.status_code == 200:
 			data = r.json()
@@ -326,9 +405,10 @@ class Disney(QObject):
 		return False
 
 	def submit_billing(self):
+		self.current_step = 9
 		self.status = 'Submitting billing'
 		self.update_status.emit(self.status)
-		print(self.status)				
+		print(self.status)	
 		url = 'https://www.shopdisney.com/api/addresses'
 		h = self.headers
 		h['content-type'] = 'application/json'
@@ -349,7 +429,12 @@ class Disney(QObject):
 				}
 			]
 		}
-		r = self.s.post(url, headers=h, json=payload)
+		try:
+			r = self.s.post(url, headers=h, json=payload, proxies=self.proxy)
+		except Exception as e:
+			print(f'{e}')
+			return False
+
 		print(r)
 		if r.status_code == 200:
 			data = r.json()
@@ -357,18 +442,22 @@ class Disney(QObject):
 			self.address_ID = data['addresses'][0]['address_id']
 			self.commerce_ID = data['commerce_id']
 			return True
-		elif r.status_code == 401:
-			self.status = 'Unauthorized'
-			self.update_status.emit(self.status)
-			print(self.status)
-			return False
+		elif r.status_code[0] == 4:
+			if r.status_code == 401:
+				self.status = 'Unauthorized'
+			elif r.status_code == 429:
+				self.status = 'Too many requests'
+		elif r.status_code[0] == 5:
+			self.status = 'Server error'
+		else:
+			self.status = 'Error submitting billing'
 
-		self.status = 'Error submitting billing'
 		self.update_status.emit(self.status)
 		print(self.status)
 		return False
 
 	def submit_order(self):
+		self.current_step = 10
 		self.status = 'Submitting order'
 		self.update_status.emit(self.status)
 		print(self.status)
@@ -383,7 +472,12 @@ class Disney(QObject):
 				'ext_order_id': self.order_number
 			}]
 		}
-		r = self.s.post(url, headers=h, json=payload)
+		try:
+			r = self.s.post(url, headers=h, json=payload, proxies=self.proxy)
+		except Exception as e:
+			print(f'{e}')
+			return False
+
 		print(r)
 		if r.status_code == 200:
 			data = r.json()
@@ -391,13 +485,20 @@ class Disney(QObject):
 			self.commerce_ID = data['commerce_id']
 			self.order_ID = data['orders'][0]['order_id']
 			return True
+		elif r.status_code[0]== 4:
+			if r.status_code == 429:
+				self.status = 'Too many requests'
+		elif r.status_code[0] == 5:
+			self.status = 'Server error'
+		else:
+			self.status = 'Error submitting order'
 
-		self.status = 'Error submitting order'
 		self.update_status.emit(self.status)
 		print(self.status)
 		return False
 
 	def submit_payment(self):
+		self.current_step = 11
 		self.status = 'Submitting payment'
 		self.update_status.emit(self.status)
 		print(self.status)
@@ -406,39 +507,28 @@ class Disney(QObject):
 		h['commerce_id'] = self.commerce_ID
 		h['authorization'] = f'{self.bearer} {self.access_token}'
 		h['content-type'] = 'application/json'
-		# payload = {
-		# 	'payments': [{
-		# 		'address': {
-		# 			'address_id': self.address_ID
-		# 		},
-		# 		'card_brand': 'VS',
-		# 		'card_number': self.billing.card_number,
-		# 		'expiration_month': self.billing.exp_month,
-		# 		'expiration_year': self.billing.exp_year,
-		# 		'is_expired': False,
-		# 		'name_holder': self.billing.name_on_card,
-		# 		'payment_id': '',
-		# 		'security_code': self.billing.cvv,
-		# 		'type': 'CC'
-		# 	}]
-		# }
 		payload = {
 			'payments': [{
 				'address': {
 					'address_id': self.address_ID
 				},
 				'card_brand': 'VS',
-				'card_number': '4767718266910894',
-				'expiration_month': '4',
-				'expiration_year': '2026',
+				'card_number': self.billing.card_number,
+				'expiration_month': self.billing.exp_month,
+				'expiration_year': self.billing.exp_year,
 				'is_expired': False,
-				'name_holder': 'Jamie Lee',
+				'name_holder': self.billing.name_on_card,
 				'payment_id': '',
-				'security_code': '799',
+				'security_code': self.billing.cvv,
 				'type': 'CC'
 			}]
 		}
-		r = self.s.post(url, headers=h, json=payload)
+		try:
+			r = self.s.post(url, headers=h, json=payload, proxies=self.proxy)
+		except Exception as e:
+			print(f'{e}')
+			return False
+
 		print(r)
 		if r.status_code == 200:
 			data = r.json()
@@ -446,13 +536,20 @@ class Disney(QObject):
 			self.commerce_ID = data['commerce_id']
 			self.payment_ID = data['payments'][0]['payment_id']
 			return True
+		elif r.status_code[0] == 4:
+			if r.status_code == 429:
+				self.status = 'Too many requests'
+		elif r.status_code[0] == 5:
+			self.status = 'Server error'
+		else:
+			self.status = 'Error submitting payment'
 
-		self.status = 'Error submitting payment'
 		self.update_status.emit(self.status)
 		print(self.status)
 		return False
 
 	def get_order(self):
+		self.current_step = 12
 		self.status = 'Getting order'
 		self.update_status.emit(self.status)
 		print(self.status)
@@ -461,20 +558,33 @@ class Disney(QObject):
 		h['commerce_id'] = self.commerce_ID
 		h['authorization'] = f'{self.bearer} {self.access_token}'
 		h['content-type'] = 'application/json'
-		r = self.s.get(url, headers=h)
+		try:
+			r = self.s.get(url, headers=h, proxies=self.proxy)
+		except Exception as e:
+			print(f'{e}')
+			return False
+
 		print(r)
 		if r.status_code == 200:
 			data = r.json()
 			print(data)
 			self.commerce_ID = data['commerceId']
+			self.payment_details = data['orders'][0]['payments']
 			return True
+		elif r.status_code[0] == 4:
+			if r.status_code == 429:
+				self.status = 'Too many requests'
+		elif r.status_code[0] == 5:
+			self.status = 'Server error'
+		else:
+			self.status = 'Error getting order'
 
-		self.status = 'Error getting order'
 		self.update_status.emit(self.status)
 		print(self.status)
 		return False
 
 	def verify_order(self):
+		self.current_step = 13
 		self.status = f'Veryifing order: {self.order_number}'
 		self.update_status.emit(self.status)
 		print(self.status)
@@ -485,25 +595,124 @@ class Disney(QObject):
 		h['content-type'] = 'application/json'
 		payload = {
 			'orders': [{
-				# 'order_total': self.total_price,
-				'order_total': '22.20',
+				'order_total': self.total_price,
 				'payments': [{
 					'payment_id': self.payment_ID,
-					# 'security_code': self.billing.cvv,
-					'security_code': '799',
+					'security_code': self.billing.cvv,
 					'type': 'CC'
 				}]
 			}]
 		}
-		r = self.s.post(url, headers=h, json=payload)
+		try:
+			r = self.s.post(url, headers=h, json=payload, proxies=self.proxy)
+		except Exception as e:
+			print(f'{e}')
+			return False
+
 		print(r)
-		data = r.json()
-		print(data)
-		return True
+		if r.status_code == 200:
+			data = r.json()
+			print(data)
+			self.commerce_ID = data['commerce_id']
+			return True
+		elif r.status_code[0] == 4:
+			if r.status_code == 429:
+				self.status = 'Too many requests'
+		elif r.status_code[0] == 5:
+			self.status = 'Server error'
+		else:
+			self.status = 'Error verifying order'
+
+		self.update_status.emit(self.status)
+		print(self.status)
+		return False
+
+	def checkout_submit_order(self):
+		self.current_step = 14
+		self.status = 'Submitting order'
+		self.update_status.emit(self.status)
+		print(self.status)
+		url = 'https://www.shopdisney.com/on/demandware.store/Sites-shopDisney-Site/default/Checkout-SubmitOrder'
+		# payment_details = f'[{{"paymentId":{self.payment_ID},"cardDesc":"{self.billing.card_type}","cardBrand":"VS","cardNumber":"xxxxxxxxxxxx{self.billing.card_number[12:]}","nameHolder":"{self.billing.name_on_card}","expirationMonth":{self.billing.exp_month},"expirationYear":{self.billing.exp_year},"address":{{"countryName":"United+States","memberId":834013121,"addressId":595220879,"nickName":"1588710139338","firstName":"James","lastName":"Han","phone1":"+1{self.profile.phone}","address1":"2850+Arrow+Creek+Dr","city":"Atlanta","state":"GA","country":"US","zipCode":"30341-5008","type":"SB","isPrimary":0,"recommendations":[],"dayPhone":"+1{self.profile.phone}"}},"type":"CC"}}]'
+		payload = {
+			'dwfrm_billing_addressFields_firstName': self.profile.first_name,
+			'dwfrm_billing_addressFields_lastName': self.profile.last_name,
+			'dwfrm_billing_addressFields_address1': self.profile.billing_address,
+			'dwfrm_billing_addressFields_address2': self.profile.billing_address_2,
+			'dwfrm_billing_addressFields_country': 'US',
+			'dwfrm_billing_addressFields_states_stateCode': self.profile.billing_state,
+			'dwfrm_billing_addressFields_city': self.profile.billing_city,
+			'dwfrm_billing_addressFields_postalCode': self.profile.billing_zip,
+			'dwfrm_billing_paymentDetails': '',
+			'dwfrm_billing_commerceId': self.commerce_ID,
+			'dwfrm_billing_vcoWalletRefId': '',
+			'dwfrm_billing_creditCardFields_email': self.profile.email,
+			'dwfrm_billing_subscribe': 'on',
+			'g-recaptcha-response': self.g_recaptcha_response
+		}
+		try:
+			r = self.s.post(url, headers=self.headers, data=payload, proxies=self.proxy)
+		except Exception as e:
+			print(f'{e}')
+			return False
+
+		print(r)
+		if r.status_code == 200:
+			data = r.json()
+			print(data)
+			self.order_number = data['orderID']
+			self.order_token = data['orderToken']
+			return True
+		elif r.status_code[0] == 4:
+			if r.status_code == 429:
+				self.status = 'Too many requests'
+		elif r.status_code[0] == 5:
+			self.status = 'Server error'
+		else:
+			self.status = 'Error submitting order'
+
+		self.update_status.emit(self.status)
+		print(self.status)
+		return False
+
+	def order_confirmation(self):
+		self.current_step = 15
+		self.status = 'Getting order confirmation'
+		self.update_status.emit(self.status)
+		print(self.status)
+		url = 'https://www.shopdisney.com/ocapi/cc/orderconfirmation'
+		payload = {
+			'order_number': self.order_number,
+			'order_token': self.order_token
+		}
+		try:
+			r = self.s.post(url, headers=self.headers, data=payload, proxies=self.proxy)
+		except Exception as e:
+			print(f'{e}')
+			return False
+
+		print(r)
+		if r.status_code == 200:
+			return True
+		elif r.status_code[0] == 4:
+			if r.status_code == 429:
+				self.status = 'Too many requests'
+		elif r.status_code[0] == 5:
+			self.status = 'Server error'
+		else:
+			self.status = 'Error getting order confirmation'
+
+		self.update_status.emit(self.status)
+		print(self.status)
+		return False
 
 	def submit_webhook(self):
+		self.current_step = 16
+		self.status = f'Check email! Order #: {self.order_number}'
+		self.update_status.emit(self.status)
+		print(self.status)
 		try:
-			gecko_utils.post_webhook(self.title, self.store, self.link, self.price, self.src)
+			gecko_utils.post_webhook(self.title, self.store, self.link, self.price, self.qty, self.src, self.color, self.size)
 		except Exception as e:
 			print('Error posting webhook')
 			print(f'{e}')

@@ -1,13 +1,18 @@
 from PyQt5 import QtWidgets, QtCore, QtGui, QtWebEngineWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineProfile
 from PyQt5.QtNetwork import QNetworkCookie, QNetworkCookieJar
 
 from stores.store_shopify import Shopify
 from stores.store_target import Target
 from stores.store_bestbuy import BestBuy
 from stores.store_disney import Disney
+<<<<<<< HEAD
 from stores.store_supreme import Supreme
+=======
+from stores.store_hyperxgaming import HyperXGaming
+from stores.store_walmart import Walmart
+>>>>>>> f8132ff9766b1e191df0da219093b71429e939e0
 from search import Search
 
 import time
@@ -21,6 +26,7 @@ from termcolor import colored
 class Task(QThread):
 
 	update_status = pyqtSignal(str, QtWidgets.QTableWidgetItem)
+	update_delay = pyqtSignal(str, QtWidgets.QTableWidgetItem)
 	# update_proxy = pyqtSignal(str, QtWidgets.QTableWidgetItem)
 	update_proxy_label = pyqtSignal(int)
 	product_updated = pyqtSignal(str, QtWidgets.QTableWidgetItem)
@@ -96,6 +102,9 @@ class Task(QThread):
 		if not self.color:
 			self.color = 'N/A'
 
+		self.finished.connect(self.stop_task)
+		self.init_store()
+
 		# image_start = QtGui.QPixmap('icons/icon_play.png')
 		image_stop = QtGui.QPixmap('src/icon_stop.png')
 		image_delete = QtGui.QPixmap('src/light_icon_trash.png')
@@ -158,7 +167,7 @@ class Task(QThread):
 		# self.widget_task_name.setLayout(layout)
 
 		# QTimer
-		self.interval = 50
+		self.interval = 21
 		self.timer = QtCore.QTimer()
 		self.timer.setTimerType(QtCore.Qt.PreciseTimer)
 		self.timer.timeout.connect(self.update_loop)
@@ -256,10 +265,17 @@ class Task(QThread):
 			self.store = BestBuy(self.search, self.qty, self.size, self.color, self.profile, self.billing)
 		elif self.store_name == 'https://www.shopdisney.com/':
 			self.store = Disney(self.search, self.qty, self.size, self.color, self.profile, self.billing)
+<<<<<<< HEAD
 		elif self.store_name == 'https://www.supremenewyork.com/':
 			task_attributes = [self.task_type, self.keywords, self.qty, self.category, self.size, self.color, self.profile, self.billing]
 			print(colored(task_attributes, "green"))
 			self.store = Supreme(requests.Session(), self.task_type, None, self.keywords, self.qty, self.category, self.size, self.color, self.profile, self.billing)
+=======
+		elif self.store_name == 'https://www.hyperxgaming.com/':
+			self.store = HyperXGaming(self.search, self.qty, self.size, self.color, self.profile, self.billing)
+		elif self.store_name == 'https://www.walmart.com/':
+			self.store = Walmart(self.search, self.qty, self.size, self.color, self.profile, self.billing)
+>>>>>>> f8132ff9766b1e191df0da219093b71429e939e0
 		else:
 			print('No matching store')
 
@@ -285,7 +301,11 @@ class Task(QThread):
 		self.store.request_poll_token.connect(lambda: self.poll_response.emit(self.task_id))
 
 	def load_captcha(self):
+		self.private_profile = QWebEngineProfile()
+		print(self.private_profile.isOffTheRecord())
+		self.private_page = QWebEnginePage(self.private_profile, self)
 		self.captcha_window = QWebEngineView()
+		self.captcha_window.setPage(self.private_page)
 		self.captcha_window.loadFinished.connect(self.render_captcha)
 		for cookie in self.store.cookies:
 			self.captcha_window.page().profile().cookieStore().setCookie(cookie)
@@ -344,6 +364,7 @@ class Task(QThread):
 		if data:
 			self.store.g_recaptcha_response = data
 
+	# Issue with multiple streams. Multiple tasks will crash with this function.
 	def update_image(self):
 		url_data = urllib.request.urlopen(self.store.src).read()
 		self.image_original.loadFromData(url_data)
@@ -509,7 +530,8 @@ class Task(QThread):
 		self.loading = False
 
 	def stop_task(self):
-		self.update_status.emit('Aborted', self.widget_task_id)
+		print(f'Stopping task')
+		# self.update_status.emit('Aborted', self.widget_task_id)
 		self.abort = True
 		self.solver_available = False
 		self.token = None
@@ -609,12 +631,14 @@ class Task(QThread):
 				break
 			else:
 				if self.countdown > 0:
+					# self.update_delay.emit(f'{self.countdown} ms', self.widget_task_id)
 					self.msleep(self.interval)
 					self.countdown -= self.interval
 				else:
 					self.get_proxy()
 					self.store.proxy = self.proxy
 					self.delay = self.get_retry_delay()
+<<<<<<< HEAD
 
 					step_count = 1
 					for step in self.store.steps:
@@ -842,3 +866,20 @@ class Task(QThread):
 		# 		# finally:
 		# 		# 	with self.lock:
 		# 		# 		print('Task [{}][{}] looping'.format(self.task_id, self.task_name))
+=======
+					for step in self.store.steps[self.store.current_step:]:
+						if self.abort:
+							break
+						else:
+							if step():
+								if step == self.store.steps[-1]:
+									pass
+								else:
+									continue
+							else:
+								self.countdown = self.delay
+								break
+
+						self.abort = True
+						break
+>>>>>>> f8132ff9766b1e191df0da219093b71429e939e0

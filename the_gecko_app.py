@@ -208,9 +208,11 @@ class GUI(QtWidgets.QMainWindow):
 			'https://www.bestbuy.ca/',
 			'https://www.bestbuy.com/',
 			'https://www.hottopic.com/',
+			'https://www.hyperxgaming.com/',
 			'https://www.shopdisney.com/',
 			'https://www.supremenewyork.com/',
-			'https://www.target.com/'
+			'https://www.target.com/',
+			'https://www.walmart.com/'
 		]
 
 		self.ui.combo_box_store.addItem(self.stores[0], 'nk')
@@ -218,8 +220,10 @@ class GUI(QtWidgets.QMainWindow):
 		self.ui.combo_box_store.addItem(self.stores[2], 'nv')
 		self.ui.combo_box_store.addItem(self.stores[3], 'nk')
 		self.ui.combo_box_store.addItem(self.stores[4], 'nv')
-		self.ui.combo_box_store.addItem(self.stores[5], 'nk')
-		self.ui.combo_box_store.addItem(self.stores[6], 'nv')
+		self.ui.combo_box_store.addItem(self.stores[5], 'nv')
+		self.ui.combo_box_store.addItem(self.stores[6], 'nk')
+		self.ui.combo_box_store.addItem(self.stores[7], 'nv')
+		self.ui.combo_box_store.addItem(self.stores[8], 'nd')
 
 		self.fallback_sitekeys = {
 			'https://shop.funko.com/': '6LeoeSkTAAAAAA9rkZs5oS82l69OEYjKRZAiKdaF',
@@ -1392,6 +1396,10 @@ class GUI(QtWidgets.QMainWindow):
 		self.ui.table_widget_tasks.item(row, 8).setText(message)
 		# self.ui.table_widget_tasks.resizeColumnToContents(8)
 
+	def update_delay(self, message, item):
+		row = self.ui.table_widget_tasks.row(item)
+		self.ui.table_widget_tasks.item(row, 9).setText(message)
+
 	def update_task_title(self, title, item):
 		row = self.ui.table_widget_tasks.row(item)
 		self.ui.table_widget_tasks.item(row, 4).setText(title)
@@ -1714,6 +1722,7 @@ class GUI(QtWidgets.QMainWindow):
 			task.update_proxy_label.connect(self.update_proxy)
 			task.load_browser.connect(self.load_task_browser)
 			task.update_status.connect(self.update_task_status)
+			task.update_delay.connect(self.update_delay)
 			task.update_title.connect(self.update_task_title)
 			# task.update_title.connect(self.update_title)
 			# task.update_proxy.connect(self.update_proxy)

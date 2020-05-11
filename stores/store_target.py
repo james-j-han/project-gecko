@@ -42,7 +42,8 @@ class Target(QObject):
 			self.step_3,
 			self.step_4,
 			self.step_5,
-			self.step_6
+			self.step_6,
+			self.submit_webhook
 		]
 
 	def step_1(self):
@@ -206,7 +207,7 @@ class Target(QObject):
 		
 		return False
 
-	def verify_checkout(self):
+	def submit_webhook(self):
 		gecko_utils.post_webhook(self.title, self.store, self.link, self.price, self.qty, self.src, self.color, self.size)
 		return True
 
