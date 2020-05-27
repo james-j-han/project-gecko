@@ -2,83 +2,62 @@ import queue
 import random
 import threading
 
+# VERSION 1.1
 class Proxy:
 
-	def __init__(self, proxy_id=None, proxy_name='localhost', proxies=None):
+	def __init__(self, proxy_id, proxy_name, proxies):
 		self.proxy_id = proxy_id
 		self.proxy_name = proxy_name
 		self.proxies = proxies
-		self.proxy_list = self.split_proxies()
-		# self.pool = queue.Queue()
 
-		self.seq_pool = self.get_seq_queue()
-		self.ran_pool = self.get_ran_queue()
+		self.proxy_list = []
+		self.seq_pool = queue.Queue()
+		self.ran_pool = queue.Queue()
+
+		self.split_proxies()
+		self.create_seq_pool()
+		self.create_ran_pool()
+
 		self.lock = threading.Lock()
 
 	def split_proxies(self):
-		proxy_list = []
-		if self.proxies:
-			for proxy in self.proxies.split('\n'):
-				parts = proxy.split(':')
-				combined = {'https': 'https://{}:{}@{}:{}'.format(parts[2], parts[3], parts[0], parts[1])}
-				proxy_list.append(combined)
-				# self.pool.put(combined)
-		return proxy_list
+		for proxy in self.proxies.split('\n'):
+			self.proxy_list.append(self.sort_proxy(proxy))
 
-	def get_ran_queue(self):
-		q = queue.Queue()
-		random.shuffle(self.proxy_list)
-		for proxy in self.proxy_list:
-			q.put(proxy)
-		return q
-		# self.set_queue(self.proxy_list)
+	def sort_proxy(self, proxy):
+		parts = proxy.split(':')
+		if len(parts) == 4:
+			sorted_proxy = {'https': f'https://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}'}
+		else:
+			sorted_proxy = {'http': f'http://{parts[0]}:{parts[1]}'}
 
-	def get_seq_queue(self):
-		# self.proxy_list = self.split_proxies()
-		# self.set_queue(self.proxy_list)
-		q = queue.Queue()
-		for proxy in self.proxy_list:
-			q.put(proxy)
-		return q
+		return sorted_proxy
 
-	def get_ran_proxy(self):
-		proxy = None
-		with self.lock:
-			print('GET Lock aquired')
-			proxy = self.ran_pool.get()
-			print('GET Lock release')
-		return proxy
-
-	def get_seq_proxy(self):
-		proxy = None
-		with self.lock:
-			print('GET Lock aquired')
-			proxy = self.seq_pool.get()
-			print('GET Lock release')
-		return proxy
-
-	def put_ran_proxy(self, proxy):
-		with self.lock:
-			print('PUT Lock aquired')
+	def create_ran_pool(self):
+		pl = self.proxy_list
+		random.shuffle(pl)
+		for proxy in pl:
 			self.ran_pool.put(proxy)
-			print('PUT Lock release')
 
-	def put_seq_proxy(self, proxy):
-		with self.lock:
-			print('PUT Lock aquired')
+	def create_seq_pool(self):
+		pl = self.proxy_list
+		for proxy in pl:
 			self.seq_pool.put(proxy)
-			print('PUT Lock release')
 
-	# def set_queue(self, proxy_list):
-	# 	self.pool.queue.clear()
-	# 	for proxy in proxy_list:
-	# 		self.pool.put(proxy)
-
-	# def get_queue_random(self):
-	# 	proxies = self.proxy_list
-
-
-	# def get_proxy(self):
-	# 	proxy = self.pool.get()
-	# 	self.pool.put(proxy)
-	# 	return proxy
+	def get_proxy(self, proxy, rotation):
+		if proxy:
+			with self.lock:
+				if rotation == 'Sequential':
+					self.seq_pool.put(proxy)
+					p = self.seq_pool.get()
+				else:
+					self.ran_pool.put(proxy)
+					p = self.ran_pool.get()
+		else:
+			with self.lock:
+				if rotation == 'Sequential':
+					p = self.seq_pool.get()
+				else:
+					p = self.ran_pool.get()
+		
+		return p

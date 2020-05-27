@@ -3,30 +3,41 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineProfile
 from PyQt5.QtNetwork import QNetworkCookie, QNetworkCookieJar
 
+from qasync import QEventLoop
+
 from stores.store_shopify import Shopify
 from stores.store_target import Target
 from stores.store_bestbuy import BestBuy
 from stores.store_disney import Disney
 from stores.store_hyperxgaming import HyperXGaming
 from stores.store_walmart import Walmart
+from stores.store_ebay import Ebay
 from search import Search
+from profile import Profile
+from billing import Billing
 
 import time
 import random
 import requests
 import threading
 import urllib
+import asyncio
 
+# VERSION 1.1
 class Task(QThread):
 
-	update_status = pyqtSignal(str, QtWidgets.QTableWidgetItem)
-	update_delay = pyqtSignal(str, QtWidgets.QTableWidgetItem)
-	# update_proxy = pyqtSignal(str, QtWidgets.QTableWidgetItem)
+	update_title = pyqtSignal(int)
+	update_image = pyqtSignal(int)
+	update_size = pyqtSignal(int)
+	update_proxy = pyqtSignal(int)
+	update_status = pyqtSignal(int)
+	update_delay = pyqtSignal(int)
+
+	update_run = pyqtSignal(int)
+	update_sleep = pyqtSignal(int)
+
 	update_proxy_label = pyqtSignal(int)
 	product_updated = pyqtSignal(str, QtWidgets.QTableWidgetItem)
-
-	update_status = pyqtSignal(str, QtWidgets.QTableWidgetItem)
-	update_title = pyqtSignal(str, QtWidgets.QTableWidgetItem)
 
 	update_log = pyqtSignal(str)
 	delete = pyqtSignal(int, str)
@@ -44,43 +55,15 @@ class Task(QThread):
 
 	lock = threading.Lock()
 
-	def __init__(self, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, aa, ab, ac, ad):
+	def __init__(self, **kwargs):
 		QThread.__init__(self)
-		self.task_id = a
-		self.task_name = b
-		self.task_type = c
-		self.store_name = d
-		self.qty = e
-		self.check_box_captcha = f
-		self.search_type = g
-		self.search = h
-		self.check_box_account = i
-		self.account = j
-		self.profile = k
-		self.billing = l
-		self.check_box_proxies = m
-		self.proxy_profile = n
-		self.rotation = o
-		self.check_box_category = p
-		self.category = q
-		self.check_box_size = r
-		self.size = s
-		self.check_box_color = t
-		self.color = u
-		self.retry_delay = v
-		self.check_box_retry_var = w
-		self.retry_var = x
-		self.check_box_checkout_delay = y
-		self.checkout_delay = z
-		self.check_box_checkout_var = aa
-		self.checkout_var = ab
-		self.base_url = ac
-		self.api_key = ad
+		for key, value in kwargs.items():
+			setattr(self, key, value)
 
 		self.status = 'Ready'
 		self.check_box_mask_proxy = QtWidgets.QCheckBox()
 		self.check_box_mask_proxy.setCheckState(QtCore.Qt.PartiallyChecked)
-		self.check_box_mask_proxy.stateChanged.connect(self.update_proxy)
+		self.check_box_mask_proxy.stateChanged.connect(self.mask_proxy)
 		self.delay = 0
 		self.countdown = 0
 		self.delaying = False
@@ -94,36 +77,57 @@ class Task(QThread):
 		self.proxy = None
 		self.solver_available = False
 		if not self.color:
-			self.color = 'N/A'
+			self.color = 'N/A' # FIX THIS
+
+		self.get_retry_delay()
 
 		self.finished.connect(self.stop_task)
 		self.init_store()
+
+		# self.loop = asyncio.get_event_loop()
+		# self.loop.run_until_complete(self.run2())
+		# self.loop.create_task(self.run_2())
+
+		# self.thread = threading.Thread(target=self.run_forever, args=(self.loop,))
+		# self.thread.daemon = True
 
 		# image_start = QtGui.QPixmap('icons/icon_play.png')
 		image_stop = QtGui.QPixmap('src/icon_stop.png')
 		image_delete = QtGui.QPixmap('src/light_icon_trash.png')
 		icon_start = QtGui.QIcon(QtGui.QPixmap('src/icon_play.png'))
+		icon_captcha = QtGui.QIcon(QtGui.QPixmap('src/captcha.png'))
 		icon_stop = QtGui.QIcon(image_stop)
 		icon_delete = QtGui.QIcon(image_delete)
 		self.button_start = QtWidgets.QPushButton()
-		self.button_start.setFixedSize(30, 30)
+		self.button_start.setFixedSize(26, 26)
 		# self.button_start.setIcon(icon_start)
 		self.button_start.setFocusPolicy(QtCore.Qt.NoFocus)
 		self.button_start.setObjectName('button_play')
 		self.button_stop = QtWidgets.QPushButton()
-		self.button_stop.setFixedSize(30, 30)
+		self.button_stop.setFixedSize(26, 26)
 		# self.button_stop.setIcon(icon_stop)
 		self.button_stop.setFocusPolicy(QtCore.Qt.NoFocus)
 		self.button_stop.setObjectName('button_stop')
 		self.button_stop.setEnabled(False)
 		self.button_delete = QtWidgets.QPushButton()
-		self.button_delete.setFixedSize(30, 30)
+		self.button_delete.setFixedSize(26, 26)
 		# self.button_delete.setIcon(icon_delete)
 		self.button_delete.setFocusPolicy(QtCore.Qt.NoFocus)
 		self.button_delete.setObjectName('button_delete')
 
+		self.button_captcha = QtWidgets.QPushButton()
+		self.button_captcha.setFixedSize(26, 26)
+		# self.button_captcha.setIcon(icon_delete)
+		self.button_captcha.setFocusPolicy(QtCore.Qt.NoFocus)
+		self.button_captcha.setObjectName('button_captcha')
+
+		self.button_account = QtWidgets.QPushButton()
+		self.button_account.setFixedSize(26, 26)
+		self.button_account.setFocusPolicy(QtCore.Qt.NoFocus)
+		self.button_account.setObjectName('button_account')
+
 		self.button_gif = QtWidgets.QPushButton()
-		self.button_gif.setFixedSize(30, 30)
+		self.button_gif.setFixedSize(26, 26)
 		self.button_gif.setObjectName('button_gif')
 		# self.label_gif = QtWidgets.QLabel()
 		# self.label_gif.setFixedSize(30, 30)
@@ -133,7 +137,7 @@ class Task(QThread):
 		# self.gif.setScaledSize(QtCore.QSize(44, 44))
 		self.button_gif.setIcon(QtGui.QIcon(self.gif.currentPixmap()))
 		# self.button_gif.setIconSize(QtCore.QSize(30, 30))
-		self.gif.frameChanged.connect(self.update_button_icon)
+		# self.gif.frameChanged.connect(self.update_button_icon)
 		# self.label_gif.setMovie(self.gif)
 		self.gif.start()
 		self.gif.setPaused(True)
@@ -144,10 +148,11 @@ class Task(QThread):
 		layout.addWidget(self.button_start)
 		layout.addWidget(self.button_stop)
 		layout.addWidget(self.button_delete)
+		layout.addWidget(self.button_account)
+		layout.addWidget(self.button_captcha)
 		self.actions = QtWidgets.QWidget()
 		# self.actions.setStyleSheet("background: transparent")
 		# self.actions.setAutoFillBackground(False)
-		# self.actions.setObjectName('widget_actions')
 		self.actions.setLayout(layout)
 
 		# Task Name and Task Store
@@ -161,61 +166,104 @@ class Task(QThread):
 		# self.widget_task_name.setLayout(layout)
 
 		# QTimer
-		self.interval = 21
+		self.interval = 53
 		self.timer = QtCore.QTimer()
 		self.timer.setTimerType(QtCore.Qt.PreciseTimer)
 		self.timer.timeout.connect(self.update_loop)
 
-		self.widget_task_id = QtWidgets.QTableWidgetItem(self.task_id)
+		# Task ID cell
+		self.widget_task_id = QtWidgets.QTableWidgetItem()
 		self.widget_task_id.setData(QtCore.Qt.UserRole, self.task_id)
-		self.widget_task_type = QtWidgets.QTableWidgetItem(self.task_type)
-		self.widget_task_type.setTextAlignment(QtCore.Qt.AlignCenter)
-		self.widget_task_type.setData(QtCore.Qt.UserRole, self.task_id)
-		self.widget_task_name = QtWidgets.QTableWidgetItem(f'{self.task_name}\n{self.store_name}')
-		self.widget_task_name.setTextAlignment(QtCore.Qt.AlignCenter)
-		self.widget_profile = QtWidgets.QTableWidgetItem(self.profile.profile_name)
-		self.widget_profile.setTextAlignment(QtCore.Qt.AlignCenter)
-		self.widget_product = QtWidgets.QTableWidgetItem(self.product_title)
-		self.widget_product.setTextAlignment(QtCore.Qt.AlignCenter)
-		self.widget_size = QtWidgets.QTableWidgetItem()
-		self.widget_size.setTextAlignment(QtCore.Qt.AlignCenter)
-		self.widget_status = QtWidgets.QTableWidgetItem(self.status)
-		self.widget_status.setTextAlignment(QtCore.Qt.AlignCenter)
-		self.widget_proxy = QtWidgets.QTableWidgetItem(self.proxy_profile.proxy_name)
-		self.widget_proxy.setTextAlignment(QtCore.Qt.AlignCenter)
-		self.widget_delay = QtWidgets.QTableWidgetItem(f'{self.countdown} ms\n{self.delay} ms')
-		self.widget_delay.setTextAlignment(QtCore.Qt.AlignCenter)
 
+		# Task type cell
+		self.widget_task_type = QtWidgets.QWidget()
+		self.widget_task_type.setObjectName('w_task_type')
+		layout = QtWidgets.QVBoxLayout()
+		layout.setContentsMargins(4, 0, 4, 4)
+		self.label_task_type = QtWidgets.QLabel(self.task_type)
+		self.label_task_type.setAlignment(QtCore.Qt.AlignCenter)
+		layout.addWidget(self.label_task_type)
+		self.widget_task_type.setLayout(layout)
+		
+		# Task name and store cell
+		self.widget_name_store = QtWidgets.QWidget()
+		self.widget_name_store.setObjectName('w_name_store')
+		layout = QtWidgets.QVBoxLayout()
+		layout.setContentsMargins(4, 0, 4, 4)
+		self.label_name_store = QtWidgets.QLabel(f'{self.task_name}\n{self.store_name}')
+		self.label_name_store.setAlignment(QtCore.Qt.AlignCenter)
+		layout.addWidget(self.label_name_store)
+		self.widget_name_store.setLayout(layout)
+		
+		# Task profile cell
+		self.widget_profile = QtWidgets.QWidget()
+		self.widget_profile.setObjectName('w_profile')
+		layout = QtWidgets.QVBoxLayout()
+		layout.setContentsMargins(4, 0, 4, 4)
+		self.label_profile = QtWidgets.QLabel(f'{self.profile.profile_name}')
+		self.label_profile.setAlignment(QtCore.Qt.AlignCenter)
+		layout.addWidget(self.label_profile)
+		self.widget_profile.setLayout(layout)
+		
+		# Task product cell
+		self.widget_product = QtWidgets.QWidget()
+		self.widget_product.setObjectName('w_product')
+		layout = QtWidgets.QVBoxLayout()
+		layout.setContentsMargins(4, 0, 4, 4)
+		self.label_product = QtWidgets.QLabel()
+		# self.label_product.setAlignment(QtCore.Qt.AlignCenter)
+		layout.addWidget(self.label_product)
+		self.widget_product.setLayout(layout)
+		
+		# Task image cell
 		self.widget_image = QtWidgets.QWidget()
+		self.widget_image.setObjectName('w_image')
+		layout = QtWidgets.QVBoxLayout()
+		layout.setContentsMargins(4, 0, 4, 4)
 		self.label_image = QtWidgets.QLabel()
-		self.label_image.setFixedSize(46, 46)
 		self.label_image.setObjectName('label_image')
-		# self.label_image.setScaledContents(True)
-		self.image_original = QtGui.QPixmap()
-		self.image_small = None
-		self.image_large = None
-		self.label_image.setScaledContents(False)
-		self.label_image.setPixmap(QtGui.QPixmap(self.image_original))
-		layout_image = QtWidgets.QVBoxLayout()
-		layout_image.setContentsMargins(0, 0, 0, 0)
-		layout_image.setAlignment(QtCore.Qt.AlignCenter)
-		layout_image.addWidget(self.label_image)
-		self.widget_image.setLayout(layout_image)
+		self.label_image.setAlignment(QtCore.Qt.AlignCenter)
+		layout.addWidget(self.label_image)
+		self.widget_image.setLayout(layout)
+		
+		# Task proxy cell
+		self.widget_proxy = QtWidgets.QWidget()
+		self.widget_proxy.setObjectName('w_proxy')
+		layout = QtWidgets.QVBoxLayout()
+		layout.setContentsMargins(4, 0, 4, 4)
+		self.label_proxy = QtWidgets.QLabel()
+		self.label_proxy.setAlignment(QtCore.Qt.AlignCenter)
+		layout.addWidget(self.label_proxy)
+		self.widget_proxy.setLayout(layout)
 
-		self.title_set = False
-		self.src_set = False
-		self.size_set = False
-		self.proxy_set = False
+		# Task status cell
+		self.widget_status = QtWidgets.QWidget()
+		self.widget_status.setObjectName('w_status')
+		layout = QtWidgets.QVBoxLayout()
+		layout.setContentsMargins(4, 0, 4, 4)
+		self.label_status = QtWidgets.QLabel(f'{self.store.status}')
+		self.label_status.setAlignment(QtCore.Qt.AlignCenter)
+		layout.addWidget(self.label_status)
+		self.widget_status.setLayout(layout)
+		
+		# Task action cell
+		self.widget_action = QtWidgets.QWidget()
+		self.widget_action.setObjectName('w_action')
+		self.widget_action.setContentsMargins(0, 0, 10, 0)
+		layout = QtWidgets.QHBoxLayout()
+		layout.setContentsMargins(4, 0, 4, 4)
+		layout.addWidget(self.button_gif)
+		layout.addWidget(self.button_start)
+		layout.addWidget(self.button_stop)
+		layout.addWidget(self.button_delete)
+		layout.addWidget(self.button_account)
+		layout.addWidget(self.button_captcha)
+		self.widget_action.setLayout(layout)
 
 		self.cookie_jar = QNetworkCookieJar()
 
-		# url_data = urllib.request.urlopen(url).read()
-		# image = QtGui.QImage()
-		# image.loadFromData(url_data)
-		# self.ui.label_picture.setPixmap(QtGui.QPixmap(image))
-
-	def update_button_icon(self):
-		self.button_gif.setIcon(QtGui.QIcon(self.gif.currentPixmap()))
+	# def update_button_icon(self):
+	# 	self.button_gif.setIcon(QtGui.QIcon(self.gif.currentPixmap()))
 
 	def set_font_bold(self, bold):
 		font = QtGui.QFont()
@@ -234,17 +282,27 @@ class Task(QThread):
 		self.widget_proxy.setFont(font)
 
 	def get_retry_delay(self):
-		delay_var = 0
-		delay = int(self.retry_delay)
-		if self.check_box_retry_var == QtCore.Qt.Checked:
-			delay_var = int(self.retry_var)
-		lower_limit = delay - delay_var
-		if lower_limit < 0:
-			lower_limit = 0
-		upper_limit = delay + delay_var
-		random_delay = random.randint(lower_limit, upper_limit + 1)
-		# print('Delay range: {} - {} [{}]'.format(lower_limit, upper_limit, random_delay))
+		delay_min = int(self.delay_min)
+
+		delay_max = delay_min
+		if self.delay_max:
+			delay_max = int(self.delay_max)
+
+		random_delay = random.randint(delay_min, delay_max)
+		print(random_delay)
 		return random_delay
+
+		# delay_var = 0
+		# delay = int(self.retry_delay)
+		# if self.check_box_retry_var == QtCore.Qt.Checked:
+		# 	delay_var = int(self.retry_var)
+		# lower_limit = delay - delay_var
+		# if lower_limit < 0:
+		# 	lower_limit = 0
+		# upper_limit = delay + delay_var
+		# random_delay = random.randint(lower_limit, upper_limit + 1)
+		# # print('Delay range: {} - {} [{}]'.format(lower_limit, upper_limit, random_delay))
+		# return random_delay
 
 	#--------------------Init Functions--------------------
 
@@ -254,24 +312,28 @@ class Task(QThread):
 		if self.store_name == 'Custom Shopify':
 			self.store = Shopify(self.base_url, self.api_key, self.keywords, self.qty, self.size, self.color, self.profile, self.billing)
 		elif self.store_name == 'https://www.target.com/':
-			self.store = Target(self.search, self.qty, self.size, self.color, self.account, self.profile, self.billing)
+			self.store = Target(self.search, self.qty, self.size, self.color, self.profile, self.billing)
 		elif self.store_name == 'https://www.bestbuy.com/':
 			self.store = BestBuy(self.search, self.qty, self.size, self.color, self.profile, self.billing)
 		elif self.store_name == 'https://www.shopdisney.com/':
-			self.store = Disney(self.search, self.qty, self.size, self.color, self.profile, self.billing)
+			self.store = Disney(self.task_type, self.search, self.qty, self.size, self.color, self.profile, self.billing)
 		elif self.store_name == 'https://www.hyperxgaming.com/':
 			self.store = HyperXGaming(self.search, self.qty, self.size, self.color, self.profile, self.billing)
 		elif self.store_name == 'https://www.walmart.com/':
-			self.store = Walmart(self.search, self.qty, self.size, self.color, self.profile, self.billing)
+			self.store = Walmart(self.task_type, self.search, self.qty, self.size, self.color, self.profile, self.billing)
+		elif self.store_name == 'https://www.ebay.com/':
+			self.store = Ebay(self.task_type, self.search, self.qty, self.size, self.color, self.profile, self.billing)
 		else:
 			print('No matching store')
 
 		self.connect_signals()
 
 	def connect_signals(self):
-		self.store.update_status.connect(lambda message: self.update_status.emit(message, self.widget_task_id))
-		self.store.update_title.connect(lambda title: self.update_title.emit(title, self.widget_task_id))
-		self.store.update_image.connect(self.update_image)
+		self.store.update_status.connect(lambda: self.update_status.emit(self.task_id))
+		self.store.update_title.connect(lambda: self.update_title.emit(self.task_id))
+		self.store.update_image.connect(lambda: self.update_image.emit(self.task_id))
+		self.store.update_size.connect(lambda: self.update_size.emit(self.task_id))
+		# self.store.update_proxy.connect(lambda: self.update_proxy.emit(self.task_id))
 		self.store.request_captcha.connect(lambda: self.request_captcha.emit(self.task_id))
 		self.store.poll_response.connect(lambda: self.poll_response.emit(self.task_id))
 
@@ -319,190 +381,101 @@ class Task(QThread):
 		if data:
 			self.store.g_recaptcha_response = data
 
-	# Issue with multiple streams. Multiple tasks will crash with this function.
-	def update_image(self):
-		url_data = urllib.request.urlopen(self.store.src).read()
-		self.image_original.loadFromData(url_data)
-		width = self.image_original.width()
-		height = self.image_original.height()
-		if width > height:
-			self.image_small = self.image_original.scaledToWidth(46, QtCore.Qt.SmoothTransformation)
-			self.image_large = self.image_original.scaledToWidth(232, QtCore.Qt.SmoothTransformation)
-		elif height > width:
-			self.image_small = self.image_original.scaledToHeight(46, QtCore.Qt.SmoothTransformation)
-			self.image_large = self.image_original.scaledToHeight(232, QtCore.Qt.SmoothTransformation)
+	def set_title(self):
+		self.label_product.setText(f'{self.store.title}\nQty: {self.store.qty}  Size: {self.store.size}  Color: {self.store.color}')
+
+	def set_image(self):
+		headers = {
+			'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:75.0) Gecko/20100101 Firefox/75.0',
+		}
+		try:
+			r = requests.get(self.store.src, headers=headers)
+			if r.status_code == 200:
+				image = QtGui.QPixmap()
+				image.loadFromData(r.content)
+				scaled = image.scaledToWidth(36, QtCore.Qt.SmoothTransformation)
+				self.label_image.setPixmap(scaled)
+		except Exception as e:
+			print(f'{e}')
+
+	def set_size(self):
+		self.label_product.setText(f'{self.store.title}\nQty: {self.store.qty}  Size: {self.store.size}  Color: {self.store.color}')
+
+	def set_status(self):
+		self.label_status.setText(self.store.status)
+
+	def set_proxy(self):
+		if self.check_box_mask_proxy.checkState() == QtCore.Qt.Unchecked:
+			if self.proxy:
+				for value in self.proxy.values():
+					self.widget_proxy.setText(value)
+			else:
+				self.widget_proxy.setText('localhost')
+
+	# def set_delay(self):
+	# 	self.widget_delay.setText(f'{self.delay} ms')
+
+	def mask_proxy(self):
+		if self.check_box_mask_proxy.checkState() == QtCore.Qt.Checked:
+			self.widget_proxy.setText('**********')
+		elif self.check_box_mask_proxy.checkState() == QtCore.Qt.PartiallyChecked:
+			self.widget_proxy.setText(f'{self.proxy_profile.proxy_name}')
+		elif self.check_box_mask_proxy.checkState() == QtCore.Qt.Unchecked:
+			if self.proxy:
+				for value in self.proxy.values():
+					self.widget_proxy.setText(f'{value}')
+			else:
+				self.widget_proxy.setText('localhost')
 		else:
-			self.image_small = self.image_original.scaled(46, 46, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
-			self.image_large = self.image_original.scaled(232, 232, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
-
-		self.label_image.setPixmap(self.image_small)
-
-	def update_size(self):
-		self.size_set = False
-		if self.store.size and not self.size_set:
-			self.widget_size.setText(f'{self.store.size}')
-			self.size_set = True
-
-	def update_proxy(self):
-		self.proxy_set = False
-		if self.store.proxy and not self.proxy_set:
-			self.widget_proxy.setText(f'{self.proxy["https"]}')
-			self.proxy_set = True
-
-	def update_product_title(self, title):
-		self.product_title = title
-		self.widget_product.setText(f'{title}')
-
-	def update_product_image(self, url):
-		url_data = urllib.request.urlopen(url).read()
-		# image = QtGui.QImage()
-		self.image_original.loadFromData(url_data)
-		width = self.image_original.width()
-		height = self.image_original.height()
-		if width > height:
-			self.image_small = self.image_original.scaledToWidth(46, QtCore.Qt.SmoothTransformation)
-			self.image_large = self.image_original.scaledToWidth(232, QtCore.Qt.SmoothTransformation)
-		elif height > width:
-			self.image_small = self.image_original.scaledToHeight(46, QtCore.Qt.SmoothTransformation)
-			self.image_large = self.image_original.scaledToHeight(232, QtCore.Qt.SmoothTransformation)
-		else:
-			self.image_small = self.image_original.scaled(46, 46, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
-			self.image_large = self.image_original.scaled(232, 232, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
-
-		self.label_image.setPixmap(self.image_small)
-		# self.label_image.setPixmap(QtGui.QPixmap(self.image_original.scaled(46, 46, QtCore.Qt.KeepAspectRatio)))
-		# self.update_image.emit(image, self.widget_task_id)
-
-	def update_product_size(self, size):
-		self.widget_size.setText(f'{size}')
-		# self.update_size.emit(size, self.widget_task_id)
-
-	def update_task_status(self, status):
-		self.widget_status.setText(f'{status}')
-		# self.update_status.emit(status, self.widget_task_id)
-
-	# def update_proxy(self):
-	# 	if self.check_box_mask_proxy.checkState() == QtCore.Qt.Checked:
-	# 		self.widget_proxy.setText('********************')
-	# 	elif self.check_box_mask_proxy.checkState() == QtCore.Qt.PartiallyChecked:
-	# 		self.widget_proxy.setText(f'{self.proxy_profile.proxy_name}')
-	# 	elif self.check_box_mask_proxy.checkState() == QtCore.Qt.Unchecked:
-	# 		if self.proxy:
-	# 			proxy = self.proxy['https']
-	# 			self.widget_proxy.setText(f'{proxy}')
-	# 		else:
-	# 			self.widget_proxy.setText('')
-	# 	else:
-	# 		print('No matching state')
-
-	def set_cookies(self, cookies, url):
-		self.send_cookies.emit(cookies, url)
-
-	def render_page(self, url, cookies):
-		self.render_view = QtWebEngineWidgets.QWebEnginePage()
-		for cookie in cookies:
-			self.render_view.profile().cookieStore().setCookie(cookie)
-		self.render_view.load(QtCore.QUrl(url))
-		self.render_view.loadFinished.connect(self.get_html)
-
-	def get_html(self):
-		self.render_view.toHtml(self.callable)
-
-	def callable(self, data):
-		self.store.rendered_html = data
-		self.store.rendering = False
-
-	#--------------------Proxy Functions--------------------
-
-	# def get_next_proxy(self):
-	# 	if self.rotation == 'Sequential':
-	# 		return self.proxy_profile.get_proxy()
-	# 	elif self.rotation == 'Random':
-	# 		pass
-
-	#--------------------Mask Proxy Functions--------------------
-
-	# def mask_proxies(self, state):
-	# 	if state == QtCore.Qt.Checked:
-	# 		self.widget_proxy.setText('********************')
-	# 	elif state == QtCore.Qt.PartiallyChecked:
-	# 		self.widget_proxy.setText(self.proxy_profile.proxy_name)
-	# 	elif state == QtCore.Qt.Unchecked:
-	# 		if self.proxy is None:
-	# 			self.widget_proxy.setText(self.proxy_profile.proxy_name)
-	# 		else:
-	# 			self.widget_proxy.setText('{}'.format(self.proxy['https']))
-	# 	else:
-	# 		print('No matching check state')
-
-	# def unmask_proxy(self):
-	# 	self.line_edit_proxy.setEchoMode(QtWidgets.QLineEdit.Normal)
-	# 	# Display current proxy
-	# 	self.line_edit_proxy.setText('https://user:pass@127.0.0.1:3000')
-
-	# def mask_proxy(self):
-	# 	self.line_edit_proxy.setEchoMode(QtWidgets.QLineEdit.Normal)
-	# 	self.line_edit_proxy.setText(self.proxy_profile.proxy_name)
-
-	# def mask_full_proxy(self):
-	# 	self.line_edit_proxy.setEchoMode(QtWidgets.QLineEdit.Password)
+			print('No matching state')
 
 	#--------------------Start/Stop Functions--------------------
 
-	def render_browser(self):
-		if self.store.abck is None:
-			self.cookie_jar = QNetworkCookieJar()
-			self.browser = QtWebEngineWidgets.QWebEngineView()
-			# url = 'https://www.bestbuy.com/'
-			self.browser.load(QtCore.QUrl(self.store_name))
-			self.browser.page().profile().cookieStore().deleteAllCookies()
-			self.cookie_store = self.browser.page().profile().cookieStore()
-			self.cookie_store.cookieAdded.connect(self.on_cookie_added)
-			self.browser.loadFinished.connect(self.start_task_2)
-			# self.browser.show()
-		else:
-			self.loading = False
-
-	def on_cookie_added(self, cookie):
-		self.cookie_jar.insertCookie(cookie)
-
 	def start_task(self):
-		# Initialize appropriate store
-		self.init_store()
-		self.abort = False
-		# Start task
-		with self.lock:
-			print('Starting task [{}][{}]'.format(self.task_id, self.task_name))
-		self.gif.setFileName('gifs/running_4.gif')
-		self.gif.start()
-		self.countdown = 0
-		# self.timer.start(self.interval)
-		# self.render_browser()
-		self.start()
-
-	def start_task_2(self):
-		self.store.set_cookies(self.cookie_jar)
-		self.loading = False
+		# if self.task_type == 'Bot':
+		# 	# try:
+		# 	# 	self.loop.run_until_complete(self.run_2())
+		# 	# except KeyboardInterrupt:
+		# 	# 	self.loop.run_until_complete(self.store.logout())
+		# 	# finally:
+		# 	# 	self.loop.close()
+		# 	self.thread.start()
+		# else:
+		if not self.isRunning():
+			# Initialize appropriate store
+			# self.init_store()
+			self.abort = False
+			# Start task
+			with self.lock:
+				print(f'Starting task [{self.task_id}][{self.task_name}]')
+			self.countdown = 0
+			self.start()
 
 	def stop_task(self):
-		print(f'Stopping task')
-		# self.update_status.emit('Aborted', self.widget_task_id)
-		self.abort = True
-		self.solver_available = False
-		self.token = None
-		if self.store:
-			self.store.abort = True
-		self.request_abort.emit(self.task_id)
-		# Stop task
-		self.gif.stop()
-		self.gif.setFileName('gifs/running_2.gif')
-		self.gif.start()
-		self.gif.setPaused(True)
-		self.delaying = False
-		# self.timer.stop()
-		# self.terminate()
-		self.quit()
-		self.wait()
+		# if self.task_type == 'Bot':
+		# 	# self.store.close()
+		# 	# print(self.t.is_alive())
+		# 	self.store.logout()
+		# 	# raise Exception('LOL')
+		# else:
+		if self.isRunning():
+			with self.lock:
+				print(f'Stopping task [{self.task_id}][{self.task_name}]')
+			# self.update_status.emit('Aborted', self.widget_task_id)
+			self.abort = True
+			self.solver_available = False
+			self.token = None
+			if self.store:
+				self.store.abort = True
+			self.request_abort.emit(self.task_id)
+			# Stop task
+			self.gif.stop()
+			self.gif.setFileName('gifs/running_2.gif')
+			self.gif.start()
+			self.gif.setPaused(True)
+			# self.store.logout()
+			self.quit()
+			self.wait()
 
 	def delete_task(self):
 		if self.isRunning():
@@ -520,65 +493,31 @@ class Task(QThread):
 		self.button_start.setEnabled(False)
 		self.button_delete.setEnabled(False)
 
-	#--------------------Captcha--------------------
+	#--------------------Status Icon--------------------
+
+	def set_idle(self):
+		pass
+
+	def set_run(self):
+		self.gif.stop()
+		self.gif.setFileName('gifs/running_4.gif')
+		self.gif.start()
+	
+	def set_sleep(self):
+		self.gif.stop()
+		self.gif.setFileName('gifs/running_2.gif')
+		self.gif.start()
+
+	def set_success(self):
+		pass
 
 	#--------------------Main Loop--------------------
 
-	def custom_delay(self, sleep, p=True):
-		self.countdown = sleep
-		d = 0
-		v = 0
-		t = 0
-		interval = 50
-		while d <= sleep:
-			if self.abort:
-				break
-			else:
-				self.msleep(interval)
-				t = d
-				d += interval
-				if d > sleep:
-					v = interval - (d - sleep)
-					self.msleep(v)
-		if p:
-			print('[SLEPT]: {}ms'.format(t + v))
-
-	def get_proxy(self):
-		if self.proxy:
-			if self.rotation == 'Sequential':
-				self.proxy_profile.put_seq_proxy(self.proxy)
-				self.proxy = self.proxy_profile.get_seq_proxy()
-			elif self.rotation == 'Random':
-				self.proxy_profile.put_ran_proxy(self.proxy)
-				self.proxy = self.proxy_profile.get_ran_proxy()
-			else:
-				with self.lock:
-					print('No matching rotation')
-		else:
-			if self.rotation == 'Sequential':
-				self.proxy = self.proxy_profile.get_seq_proxy()
-			elif self.rotation == 'Random':
-				self.proxy = self.proxy_profile.get_ran_proxy()
-			else:
-				with self.lock:
-					print('No matching rotation')
-
 	def update_loop(self):
-		# if not self.abort:
-		if self.delaying:
-			# Update task labels/status
-			# self.update_title()
-			# self.update_src()
-			# self.update_size()
-			# self.update_proxy()
-			self.widget_status.setText(f'{self.store.status}')
-			# Decrement counter for delay status and update
-			self.countdown -= self.interval
-			if self.countdown <= 0:
-				self.widget_delay.setText(f'0 ms\n{self.delay} ms')
-				self.delaying = False
-			else:
-				self.widget_delay.setText(f'{self.countdown} ms\n{self.delay} ms')
+		if self.countdown > 0:
+			self.widget_delay.setText(f'{self.countdown} ms\n{self.delay} ms')
+		else:
+			self.widget_delay.setText(f'0 ms\n{self.delay} ms')
 
 	def run(self):
 		while True:
@@ -586,17 +525,23 @@ class Task(QThread):
 				break
 			else:
 				if self.countdown > 0:
-					# self.update_delay.emit(f'{self.countdown} ms', self.widget_task_id)
 					self.msleep(self.interval)
 					self.countdown -= self.interval
 				else:
-					self.get_proxy()
-					self.store.proxy = self.proxy
+					self.update_run.emit(self.task_id)
+					self.update_delay.emit(self.task_id)
+					self.proxy = self.proxies.get_proxy(self.proxy, self.rotation)
+					self.update_proxy.emit(self.task_id)
+					self.store.s.proxies.clear()
+					self.store.s.proxies.update(self.proxy)
 					self.delay = self.get_retry_delay()
 					for step in self.store.steps[self.store.current_step:]:
 						if self.abort:
 							break
 						else:
+							# if step == self.store.steps[0]:
+							# 	self.store.s.cookies.clear()
+							
 							if step():
 								if step == self.store.steps[-1]:
 									pass
@@ -604,6 +549,7 @@ class Task(QThread):
 									continue
 							else:
 								self.countdown = self.delay
+								# self.update_sleep.emit(self.task_id)
 								break
 
 						self.abort = True

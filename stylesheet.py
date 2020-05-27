@@ -23,7 +23,7 @@ class Stylesheet:
 		selection_color = '#97C777'
 		stylesheet = f'''
 		* {{
-			font-size: 14px;
+			font-size: 12px;
 			font-family: 'Montserrat';
 		}}
 		QMainWindow {{
@@ -63,30 +63,21 @@ class Stylesheet:
 		QGroupBox {{
 			color: {text_color};
 			border: none;
-		}}
-		QGroupBox#group_box_options {{
-			padding-top: 25px;
-		}}
-		QGroupBox#group_box_log {{
-			margin-top: 10px;
-			padding-top: 25px;
-		}}
-		QGroupBox#group_box_tasks {{
-			margin-top: 10px;
+			padding-top: 20px;
 		}}
 		QGroupBox:indicator {{
-			width: 14px;
-			height: 14px;
 			border-style: solid;
 			border-width: 1px;
+			border-radius: 2px;
 			border-color: {selection_color};
 			background-color: {background_color};
 		}}
 		QGroupBox:indicator:checked {{
-			width: 14px;
-			height: 14px;
-			image: url(src/icon_checked.png);
 			background-color: {selection_color};
+		}}
+		#gb_shipping, #gb_billing {{
+			padding-top: 40px;
+			margin-top: 20px;
 		}}
 		QPushButton {{
 			font-weight: normal;
@@ -102,7 +93,7 @@ class Stylesheet:
 		}}
 		QPushButton:disabled {{
 			background-color: {disabled_color};
-			border-color: {disabled_color};
+			border-color: {background_color};
 			border-style: solid;
 		}}
 		QPushButton:hover {{
@@ -154,6 +145,7 @@ class Stylesheet:
 			padding-left: 3px;
 		}}
 		QLineEdit:disabled {{
+			color: {background_color};
 			background-color: {disabled_color};
 			border: none;
 		}}
@@ -175,16 +167,15 @@ class Stylesheet:
 			padding-left: 6px;
 		}}
 		QCheckBox:indicator {{
-			width: 14px;
-			height: 14px;
+			width: 10px;
+			height: 10px;
 			border-style: solid;
 			border-width: 1px;
+			border-radius: 2px;
 			border-color: {selection_color};
 			background-color: {background_color};
 		}}
 		QCheckBox:indicator:checked {{
-			width: 14px;
-			height: 14px;
 			image: url(src/icon_checked.png);
 			background-color: {selection_color};
 		}}
@@ -200,14 +191,14 @@ class Stylesheet:
 			background-color: {background_color};
 		}}
 		QHeaderView:section:vertical {{
-			border-top: 2px solid;
-			border-left: 2px solid;
-			border-bottom: 2px solid;
+			border-top: 1px solid;
+			border-left: 1px solid;
+			border-bottom: 1px solid;
 			border-color: {selection_color};
-			margin-bottom: 10px;
+			margin-bottom: 4px;
 			padding-left: 10px;
-			border-top-left-radius: 25px;
-			border-bottom-left-radius: 25px;
+			border-top-left-radius: 4px;
+			border-bottom-left-radius: 4px;
 		}}
 		QHeaderView:section {{
 			font: bold;
@@ -221,15 +212,26 @@ class Stylesheet:
 			background-color: {background_color};
 			border: none;
 		}}
-		QTableWidget:item {{
-			border-top: 2px solid;
-			border-bottom: 2px solid;
-			margin-bottom: 10px;
+		#w_task_type, #w_name_store, #w_profile, #w_product, #w_image, #w_proxy, #w_status {{
+			border-top: 1px solid;
+			border-bottom: 1px solid;
+			margin-bottom: 4px;
+			border-color: {selection_color};
+		}}
+		#w_action {{
+			border-top: 1px solid;
+			border-bottom: 1px solid;
+			border-right: 1px solid;
+			border-top-right-radius: 4px;
+			border-bottom-right-radius: 4px;
+			margin-bottom: 4px;
 			border-color: {selection_color};
 		}}
 		QTableWidget:item:selected {{
+			color: {text_color};
 			selection-color: {background_color};
-			background-color: {selection_color};
+			background-color: {disabled_color};
+			margin-bottom: 4px;
 		}}
 		QTableCornerButton:section {{
 			background-color: {background_color};
@@ -326,6 +328,9 @@ class Stylesheet:
 		#push_button_new_tab:hover {{
 			image: url(src/icon_new_tab.png);
 		}}
+		#button_play, #button_delete, #button_stop, #button_account, #button_captcha {{
+			border-radius: 13px;
+		}}
 		#button_delete {{
 			image: url(src/icon_light_x.png);
 		}}
@@ -352,6 +357,18 @@ class Stylesheet:
 		}}
 		#button_stop:disabled {{
 			image: url(src/icon_disabled_stop.png);
+		}}
+		#button_account {{
+			image: url(src/icon_light_account.png);
+		}}
+		#button_account:hover {{
+			image: url(src/icon_account.png);
+		}}
+		#button_captcha {{
+			image: url(src/captcha.png);
+		}}
+		#button_captcha:hover {{
+			image: url(src/icon_captcha.png);
 		}}
 		#push_button_captcha {{
 			image: url(src/icon_light_captcha.png);

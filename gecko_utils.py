@@ -172,8 +172,7 @@ def get_encrypted_card(public_key, card_number, key_id=None, ca=False):
 	return number
 
 def post_webhook(title, store, link, price, qty, src, color, size):
-	url = 'https://discordapp.com/api/webhooks/626625411295739904/c2tST5AbhPPon07yfPCW7e9gYJE-7CgqS-d1Cm5EgaQSl7hiNcc86zR0ebOvDHlKlE_z'
-	# url = 'https://discordapp.com/api/webhooks/601232887219748874/tu1D8PBWC7STcVZ0nPArrvKiFoSVApLroINAOHC54a9SUA0XKKrE-DVj5TKw3JEF4_-P'
+	url = 'https://discordapp.com/api/webhooks/709924074834493491/W1Ma0AB6P9Q4rRsD1ymiq4aqdBw7wKHaHovjI5TNMAHj811SnoX7_iyJV9j6ER4O8xju'
 	t = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
 	payload = {
 		'username': 'Success',
@@ -209,6 +208,44 @@ def post_webhook(title, store, link, price, qty, src, color, size):
 				{
 					'name': 'Size',
 					'value': f'{size}',
+					'inline': True
+				}
+			],
+			'footer': {
+				'text': 'Powered by The Gecko App | @jayimshan',
+				'icon_url': 'https://i.imgur.com/E6zcSEY.png'
+			},
+			'timestamp': t
+		}]
+	}
+	requests.post(url, json=payload)
+
+def post_webhook_2(title, store, link, price, src):
+	url = 'https://discordapp.com/api/webhooks/711733171355385927/Nryrw-4uocr54U_esXV1z7SLC2l6Dv1oNky-eV8LDcAimr8cDfmifIiOQRjCOekvIFY3' # Fruitful
+	t = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+	payload = {
+		'username': 'Restock',
+		# 'avatar_url': 'https://i.imgur.com/zhZUSyh.jpg',
+		'embeds': [{
+			'author': {
+				'name': 'Disney',
+				'icon_url': 'https://i.imgur.com/oFpjIAx.jpg'
+			},
+			# 'title': f'Disney',
+			'description': f'[{title}]({link})',
+			'color': 9946999,
+			'thumbnail': {
+				'url': f'{src}'
+			},
+			'fields': [
+				{
+					'name': 'Status',
+					'value': 'In Stock',
+					'inline': True
+				},
+				{
+					'name': 'Price',
+					'value': f'{price}',
 					'inline': True
 				}
 			],

@@ -1,10 +1,26 @@
-from PyQt5.QtCore import QObject, pyqtSignal, QByteArray
-from PyQt5 import QtCore, QtNetwork
+from PyQt5.QtCore import QObject, QUrl, pyqtSignal
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineProfile
+# from PyQt5 import QtNetwork
+from PyQt5.QtNetwork import QNetworkCookie, QNetworkCookieJar
+
+from bs4 import BeautifulSoup
 
 import requests
+import json
+import time
+
 import gecko_utils
 
+# VERSION 0.1
 class Target(QObject):
+
+	update_title = pyqtSignal()
+	update_image = pyqtSignal()
+	update_size = pyqtSignal()
+	update_status = pyqtSignal()
+	
+	request_captcha = pyqtSignal()
+	poll_response = pyqtSignal()
 
 	headers = {
 		'accept': 'application/json',
@@ -12,17 +28,13 @@ class Target(QObject):
 		'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
 	}
 
-	def __init__(self, search, qty, size, color, account, profile, billing):
+	def __init__(self, search, qty, size, color, profile, billing):
 		super().__init__()
 		self.s = requests.Session()
 		self.proxy = None
 		self.tcin = search
-		self.account = account
 		self.profile = profile
 		self.billing = billing
-
-		self.cart_id = None
-		self.payment_instruction_id = None
 
 		# Webhook info
 		self.store = 'https://www.target.com/'
@@ -34,17 +46,55 @@ class Target(QObject):
 		self.color = color
 		self.size = size
 
-		self.status = 'Ready'
+		# Product info
+		self.cart_id = None
+		self.payment_instruction_id = None
 
+		# Other info
+		self.status = 'Ready'
+		self.current_step = 0
+		self.cookie_jar = QNetworkCookieJar()
 		self.steps = [
-			self.step_1,
-			self.step_2,
-			self.step_3,
-			self.step_4,
-			self.step_5,
-			self.step_6,
-			self.submit_webhook
+			self.load_cookies_to_session,
+			self.step_2
 		]
+
+	def account_login(self):
+		url = 'https://gsp.target.com/gsp/authentications/v1/auth_codes?client_id=ecom-web-1.0.0&state=1585456116676&redirect_uri=https%3A%2F%2Fwww.target.com%2F&assurance_level=M'
+
+		self.private_profile = QWebEngineProfile()
+		print(self.private_profile.isOffTheRecord())
+		self.private_page = QWebEnginePage(self.private_profile, self)
+		self.login_window = QWebEngineView()
+		self.login_window.setPage(self.private_page)
+
+		self.cookie_store = self.login_window.page().profile().cookieStore()
+		self.cookie_store.cookieAdded.connect(self.on_cookie_added)
+
+		self.login_window.load(QUrl(url))
+		self.login_window.show()
+
+	def on_cookie_added(self, cookie):
+		self.cookie_jar.insertCookie(cookie)
+
+	def load_cookies_to_session(self):
+		for cookie in self.cookie_jar.allCookies():
+			name = cookie.name().data().decode()
+			value = cookie.value().data().decode()
+			domain = cookie.domain()
+			path = cookie.path()
+			expires = cookie.expirationDate().toString()
+			self.s.cookies.set(name=name, value=value, domain=domain, path=path)
+		return True
+
+	def test(self):
+		url = 'https://www.target.com/'
+		r = self.s.get(url, headers=self.headers)
+		print(r)
+		# print(r.text)
+		for cookie in self.s.cookies:
+			print(cookie)
+		return True
 
 	def step_1(self):
 		url = 'https://gsp.target.com/gsp/authentications/v1/auth_codes?client_id=ecom-web-1.0.0&state=1585456116676&redirect_uri=https%3A%2F%2Fwww.target.com%2F&assurance_level=M'
@@ -53,7 +103,7 @@ class Target(QObject):
 		self.status = 'Searching for product'
 		url = f'https://redsky.target.com/v3/pdp/tcin/{self.tcin}'
 		params = {
-			'excludes': 'taxonomy,bulk_ship,awesome_shop,question_answer_statistics,rating_and_review_reviews,rating_and_review_statistics,deep_red_labels,in_store_location',
+			# 'excludes': 'taxonomy,bulk_ship,awesome_shop,question_answer_statistics,rating_and_review_reviews,rating_and_review_statistics,deep_red_labels,in_store_location',
 			'key': 'eb2551e4accc14f38cc42d32fbc2b2ea'
 		}
 		r = requests.get(url, headers=self.headers, params=params, proxies=self.proxy)

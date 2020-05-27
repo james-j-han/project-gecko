@@ -33,7 +33,7 @@ import json
 
 import gecko_utils
 
-VERSION = 'The Gecko App v0.0.8'
+VERSION = 'The Gecko App v0.0.9'
 
 class GUI(QtWidgets.QMainWindow):
 
@@ -44,26 +44,7 @@ class GUI(QtWidgets.QMainWindow):
 		self.ui = Ui_MainWindow()
 		self.ui.setupUi(self)
 
-		# Tab Task paired controls
-		self.row_task_type = [self.ui.cbe_task_type, self.ui.label_task_type, self.ui.combo_box_task_type, self.ui.label_tasks, self.ui.line_edit_task_qty]
-		self.row_task_name = [self.ui.cbe_task_name, self.ui.label_task_name, self.ui.line_edit_task_name]
-		self.row_store = [self.ui.cbe_store, self.ui.label_store, self.ui.combo_box_store, self.ui.line_edit_custom_shopify, self.ui.push_button_test_custom_shopify, self.ui.label_tested]
-		self.row_search_type = [self.ui.cbe_search_type, self.ui.label_search_type, self.ui.combo_box_search_type]
-		self.row_account = [self.ui.cbe_account, self.ui.check_box_account, self.ui.combo_box_accounts]
-		self.row_profile = [self.ui.cbe_profile, self.ui.label_profile, self.ui.combo_box_profiles]
-		self.row_billing = [self.ui.cbe_billing, self.ui.label_billing, self.ui.combo_box_billing]
-		self.row_proxies = [self.ui.cbe_proxies, self.ui.check_box_proxies, self.ui.combo_box_proxies]
-		self.row_rotation = [self.ui.cbe_rotation, self.ui.label_rotation, self.ui.combo_box_rotation]
-		self.row_search = [self.ui.cbe_search, self.ui.label_search, self.ui.line_edit_search]
-		self.row_category = [self.ui.cbe_category, self.ui.check_box_category, self.ui.combo_box_category]
-		self.row_size = [self.ui.cbe_size, self.ui.check_box_size, self.ui.combo_box_size]
-		self.row_color = [self.ui.cbe_color, self.ui.check_box_color, self.ui.line_edit_color]
-		self.row_retry = [self.ui.cbe_retry_delay, self.ui.label_retry_delay, self.ui.line_edit_retry_delay, self.ui.label_retry_ms, self.ui.label_retry_range]
-		self.row_retry_variance = [self.ui.cbe_retry_variance, self.ui.check_box_retry_variance, self.ui.line_edit_retry_variance, self.ui.label_retry_var_ms]
-		self.row_checkout = [self.ui.cbe_checkout_delay, self.ui.check_box_checkout_delay, self.ui.line_edit_checkout_delay, self.ui.label_checkout_ms, self.ui.label_checkout_range]
-		self.row_checkout_variance = [self.ui.cbe_checkout_variance, self.ui.check_box_checkout_variance, self.ui.line_edit_checkout_variance, self.ui.label_checkout_var_ms]
-		self.row_qty = [self.ui.cbe_qty, self.ui.label_qty, self.ui.combo_box_qty]
-		self.row_captcha = [self.ui.cbe_captcha, self.ui.check_box_captcha]
+		self.ui.pushButton.clicked.connect(self.test)
 
 		self.cbe_items = [
 			self.ui.cbe_task_type,
@@ -71,159 +52,115 @@ class GUI(QtWidgets.QMainWindow):
 			self.ui.cbe_search_type,
 			self.ui.cbe_search,
 			self.ui.cbe_task_name,
+			self.ui.cbe_qty,
 			self.ui.cbe_account,
 			self.ui.cbe_profile,
 			self.ui.cbe_billing,
 			self.ui.cbe_proxies,
 			self.ui.cbe_rotation,
-			self.ui.cbe_category,
 			self.ui.cbe_size,
 			self.ui.cbe_color,
-			self.ui.cbe_retry_delay,
-			self.ui.cbe_retry_variance,
-			self.ui.cbe_checkout_delay,
-			self.ui.cbe_checkout_variance,
-			self.ui.cbe_qty,
+			self.ui.cbe_category,
+			self.ui.cbe_price_range,
+			self.ui.cbe_delay_range,
 			self.ui.cbe_captcha
 		]
 
-		self.num_only_line_edits = [
-			self.ui.line_edit_retry_delay,
-			self.ui.line_edit_retry_variance,
-			self.ui.line_edit_checkout_delay,
-			self.ui.line_edit_checkout_variance,
-			self.ui.line_edit_task_qty,
-			self.ui.line_edit_phone,
-			self.ui.line_edit_card_number,
-			self.ui.line_edit_cvv
-		]
+		self.ui.cbe_task_type.stateChanged.connect(self.toggle_cbe_task_type)
+		self.ui.cbe_store.stateChanged.connect(self.toggle_cbe_store)
+		self.ui.cbe_search_type.stateChanged.connect(self.toggle_cbe_search_type)
+		self.ui.cbe_search.stateChanged.connect(self.toggle_cbe_search)
+		self.ui.cbe_task_name.stateChanged.connect(self.toggle_cbe_task_name)
+		self.ui.cbe_qty.stateChanged.connect(self.toggle_cbe_qty)
+		self.ui.cbe_account.stateChanged.connect(self.toggle_cbe_account)
+		self.ui.cbe_profile.stateChanged.connect(self.toggle_cbe_profile)
+		self.ui.cbe_billing.stateChanged.connect(self.toggle_cbe_billing)
+		self.ui.cbe_proxies.stateChanged.connect(self.toggle_cbe_proxies)
+		self.ui.cbe_rotation.stateChanged.connect(self.toggle_cbe_rotation)
+		self.ui.cbe_size.stateChanged.connect(self.toggle_cbe_size)
+		self.ui.cbe_color.stateChanged.connect(self.toggle_cbe_color)
+		self.ui.cbe_category.stateChanged.connect(self.toggle_cbe_category)
+		self.ui.cbe_price_range.stateChanged.connect(self.toggle_cbe_price_range)
+		self.ui.cbe_delay_range.stateChanged.connect(self.toggle_cbe_delay_range)
+		self.ui.cbe_captcha.stateChanged.connect(self.toggle_cbe_captcha)
 
-		self.profile_pairs = [
-			[self.ui.line_edit_billing_address, self.ui.line_edit_shipping_address],
-			[self.ui.line_edit_billing_address_2, self.ui.line_edit_shipping_address_2],
-			[self.ui.line_edit_billing_city, self.ui.line_edit_shipping_city],
-			[self.ui.combo_box_billing_state, self.ui.combo_box_shipping_state],
-			[self.ui.line_edit_billing_zip, self.ui.line_edit_shipping_zip]
-		]
+		self.ui.check_box_account.stateChanged.connect(self.toggle_accounts)
+		self.ui.check_box_proxies.stateChanged.connect(self.toggle_proxies)
+		self.ui.check_box_size.stateChanged.connect(self.toggle_size)
+		self.ui.check_box_color.stateChanged.connect(self.toggle_color)
+		self.ui.check_box_category.stateChanged.connect(self.toggle_category)
+		self.ui.check_box_price_range.stateChanged.connect(self.toggle_price_range)
 
-		# Check if LineEdit, QComboBox is not empty enum
-		self.task_fields = [
-			self.ui.combo_box_task_type,
-			self.ui.combo_box_store,
-			self.ui.combo_box_search_type,
-			self.ui.line_edit_search,
-			self.ui.line_edit_task_name,
-			self.ui.line_edit_task_qty,
-			self.ui.combo_box_profiles,
-			self.ui.combo_box_billing,
-			self.ui.combo_box_proxies,
-			self.ui.combo_box_rotation,
-			self.ui.line_edit_search,
-			self.ui.combo_box_category,
-			self.ui.combo_box_size,
-			self.ui.line_edit_color,
-			self.ui.line_edit_retry_delay,
-			self.ui.line_edit_retry_variance,
-			self.ui.line_edit_checkout_delay,
-			self.ui.line_edit_checkout_variance,
-			self.ui.combo_box_qty
-		]
+		self.ui.combo_box_task_type.addItem('Normal')
+		self.ui.combo_box_task_type.addItem('Monitor')
+		self.ui.combo_box_task_type.addItem('Bot')
 
-		self.task_fields_any = [
-			self.ui.line_edit_task_name,
-			self.ui.combo_box_profiles,
-			self.ui.combo_box_billing,
-			self.ui.combo_box_proxies,
-			# self.ui.line_edit_direct_link,
-			self.ui.line_edit_search,
-			# self.ui.line_edit_neg_kw,
-			self.ui.combo_box_category,
-			self.ui.combo_box_size,
-			self.ui.line_edit_color,
-		]
+		store_disney = {
+			'url': 'https://www.shopdisney.com/',
+			'task_type': {
+				'Normal': True,
+				'Monitor': True,
+				'Bot': False
+			},
+			'search_type': {
+				'Direct Link': True,
+				'Keyword': False,
+				'Variant': True,
+				'Webhook': False
+			}
+		}
 
-		self.task_fields_num = [
-			self.ui.line_edit_task_qty,
-			self.ui.line_edit_retry_delay,
-			self.ui.line_edit_retry_variance,
-			self.ui.line_edit_checkout_delay,
-			self.ui.line_edit_checkout_variance
-		]
+		store_ebay = {
+			'url': 'https://www.ebay.com/',
+			'task_type': {
+				'Normal': False,
+				'Monitor': False,
+				'Bot': True
+			},
+			'search_type': {
+				'Direct Link': False,
+				'Keyword': False,
+				'Variant': False,
+				'Webhook': True
+			}
+		}
 
-		self.profile_items = [
-			self.ui.line_edit_profile_name,
-			self.ui.line_edit_first_name,
-			self.ui.line_edit_last_name,
-			self.ui.line_edit_email,
-			self.ui.line_edit_phone,
-			self.ui.line_edit_shipping_address,
-			self.ui.line_edit_shipping_city,
-			self.ui.combo_box_shipping_state,
-			self.ui.line_edit_shipping_zip,
-			self.ui.line_edit_billing_address,
-			self.ui.line_edit_billing_city,
-			self.ui.combo_box_billing_state,
-			self.ui.line_edit_billing_zip
-		]
+		store_walmart = {
+			'url': 'https://www.walmart.com/',
+			'task_type': {
+				'Normal': True,
+				'Monitor': False
+			},
+			'search_type': {
+				'Direct Link': True,
+				'Keyword': False,
+				'Variant': False,
+				'Webhook': False
+			}
+		}
 
-		self.address_pair = [self.ui.line_edit_shipping_address, self.ui.line_edit_billing_address]
-		self.address_2_pair = [self.ui.line_edit_shipping_address_2, self.ui.line_edit_billing_address_2]
-		self.city_pair = [self.ui.line_edit_shipping_city, self.ui.line_edit_billing_city]
-		self.zip_pair = [self.ui.line_edit_shipping_zip, self.ui.line_edit_billing_zip]
-		self.state_pair = [self.ui.combo_box_shipping_state, self.ui.combo_box_billing_state]
-
-		self.billing_items = [
-			self.ui.line_edit_billing_name,
-			self.ui.line_edit_name_on_card,
-			self.ui.combo_box_card_type,
-			self.ui.line_edit_card_number,
-			self.ui.combo_box_exp_month,
-			self.ui.combo_box_exp_year,
-			self.ui.line_edit_cvv
-		]
-
-		self.proxy_items = [
-			self.ui.line_edit_proxy_name,
-			self.ui.plain_text_edit_proxies
-		]
-
-		self.task_edit_items = [
-			[self.ui.cbe_task_type, self.ui.combo_box_task_type],
-			[self.ui.cbe_task_name, self.ui.line_edit_task_name],
-			[self.ui.cbe_store, self.ui.combo_box_store],
-			[self.ui.cbe_search_type, self.ui.combo_box_search_type],
-			[self.ui.cbe_profile, self.ui.combo_box_profiles],
-			[self.ui.cbe_proxies, self.ui.check_box_proxies, self.ui.combo_box_proxies],
-			[self.ui.cbe_search, self.ui.line_edit_search],
-			[self.ui.cbe_category, self.ui.check_box_category, self.ui.combo_box_category],
-			[self.ui.cbe_size, self.ui.check_box_size, self.ui.combo_box_size],
-			[self.ui.cbe_color, self.ui.check_box_color, self.ui.line_edit_color],
-			[self.ui.cbe_retry_delay, self.ui.line_edit_retry_delay, self.ui.check_box_retry_variance, self.ui.line_edit_retry_variance],
-			[self.ui.cbe_checkout_delay, self.ui.check_box_checkout_delay, self.ui.line_edit_checkout_delay, self.ui.check_box_checkout_variance, self.ui.line_edit_checkout_variance],
-			[self.ui.cbe_qty, self.ui.combo_box_qty]
-		]
+		store_target = {
+			'url': 'https://www.target.com/',
+			'task_type': {
+				'Normal': True,
+				'Monitor': False
+			},
+			'search_type': {
+				'Direct Link': True,
+				'Keyword': False,
+				'Variant': True,
+				'Webhook': False
+			}
+		}
 
 		self.stores = [
-			'Custom Shopify',
-			'https://www.bestbuy.ca/',
-			'https://www.bestbuy.com/',
-			'https://www.hottopic.com/',
-			'https://www.hyperxgaming.com/',
-			'https://www.shopdisney.com/',
-			'https://www.supremenewyork.com/',
-			'https://www.target.com/',
-			'https://www.walmart.com/'
+			store_disney,
+			store_ebay,
+			store_walmart,
+			store_target
 		]
 
-		self.ui.combo_box_store.addItem(self.stores[0], 'nk')
-		self.ui.combo_box_store.addItem(self.stores[1], 'nv')
-		self.ui.combo_box_store.addItem(self.stores[2], 'nv')
-		self.ui.combo_box_store.addItem(self.stores[3], 'nk')
-		self.ui.combo_box_store.addItem(self.stores[4], 'nv')
-		self.ui.combo_box_store.addItem(self.stores[5], 'nv')
-		self.ui.combo_box_store.addItem(self.stores[6], 'nk')
-		self.ui.combo_box_store.addItem(self.stores[7], 'nv')
-		self.ui.combo_box_store.addItem(self.stores[8], 'nd')
+		self.load_stores('Normal')
 
 		self.fallback_sitekeys = {
 			'https://shop.funko.com/': '6LeoeSkTAAAAAA9rkZs5oS82l69OEYjKRZAiKdaF',
@@ -255,20 +192,18 @@ class GUI(QtWidgets.QMainWindow):
 		# self.solver_window.stop_solvers.connect(self.stop_solvers)
 
 		# need callback to main executable
-		self.icon_logo = QtGui.QPixmap(QtGui.QImage('src/logo_2.png').scaled(232, 232, QtCore.Qt.KeepAspectRatio))
-		self.ui.label_picture.setPixmap(self.icon_logo)
-		self.proxy = None
+		# self.icon_logo = QtGui.QPixmap(QtGui.QImage('src/logo_2.png').scaled(232, 232, QtCore.Qt.KeepAspectRatio))
+		# self.ui.label_picture.setPixmap(self.icon_logo)
 		self.proxies = {}
 		self.tasks = {}
 		self.task_ids = []
 		self.accounts = {}
-		self.tokens = {}
-		self.token_count = 0
+		self.profiles = {}
+		self.billing = {}
 		self.solvers = {}
+		self.items_to_save = {}
+
 		self.mass_edit_fields = {}
-		# self.highlight_rows = {}
-		self.renderers = {}
-		self.ctrl_key = False
 		self.shopify = {
 			'base_url': None,
 			'api_key': None,
@@ -292,20 +227,20 @@ class GUI(QtWidgets.QMainWindow):
 		# except Exception as e:
 		# 	self.permission_dialog('Permission Denied', '{}\n\n Please run as administrator'.format(e))
 
-		# create captcha queue types
-		self.tokens = {}
-		for store in self.stores:
-			self.tokens[store] = queue.Queue()
-
 		# rx = QtCore.QRegExp('^[0-9]{1,}$')
-		rx = QtCore.QRegExp('^([1-9][0-9]*)$')
-		self.validator = QtGui.QRegExpValidator(rx, self)
-		for item in self.num_only_line_edits:
-			item.setValidator(self.validator)
+		# rx = QtCore.QRegExp('^([1-9][0-9]*)$')
+		# self.validator = QtGui.QRegExpValidator(rx, self)
+		# for item in self.num_only_line_edits:
+		# 	item.setValidator(self.validator)
 
-		# --------------------Recaptcha Window--------------------
+#================================================================================
+# RECAPTCHA WINDOW
+#================================================================================
 
-		# --------------------Icons--------------------
+#================================================================================
+# ICONS
+#================================================================================
+
 		# icon_start = QtGui.QIcon(QtGui.QPixmap('src/icon_play.png'))
 		# icon_stop = QtGui.QIcon(QtGui.QPixmap('src/icon_stop.png'))
 		# icon_delete = QtGui.QIcon(QtGui.QPixmap('src/light_icon_trash.png'))
@@ -348,100 +283,92 @@ class GUI(QtWidgets.QMainWindow):
 		icon_settings.addPixmap(QtGui.QPixmap('src/icon_light_gear.png'), QtGui.QIcon.Normal, QtGui.QIcon.Off)
 		self.ui.tabWidget.setTabIcon(5, icon_settings)
 
-		self.row_task_type[0].stateChanged.connect(self.toggle_row_task_type)
-		self.row_task_name[0].stateChanged.connect(self.toggle_row_task_name)
-		self.row_store[0].stateChanged.connect(self.toggle_row_store)
-		self.row_store[2].currentIndexChanged.connect(self.toggle_custom_shopify)
-		self.row_search_type[0].stateChanged.connect(self.toggle_row_search_type)
-		self.row_account[0].stateChanged.connect(self.toggle_row_account)
-		self.row_account[1].stateChanged.connect(self.toggle_accounts)
-		self.row_profile[0].stateChanged.connect(self.toggle_row_profile)
-		self.row_billing[0].stateChanged.connect(self.toggle_row_billing)
-		self.row_proxies[0].stateChanged.connect(self.toggle_row_proxies)
-		self.row_proxies[1].stateChanged.connect(self.toggle_proxies)
-		self.row_rotation[0].stateChanged.connect(self.toggle_row_rotation)
-		self.row_search[0].stateChanged.connect(self.toggle_row_search)
-		self.row_category[0].stateChanged.connect(self.toggle_row_category)
-		self.row_category[1].stateChanged.connect(self.toggle_category)
-		self.row_size[0].stateChanged.connect(self.toggle_row_size)
-		self.row_size[1].stateChanged.connect(self.toggle_size)
-		self.row_color[0].stateChanged.connect(self.toggle_row_color)
-		self.row_color[1].stateChanged.connect(self.toggle_color)
-		self.row_retry[0].stateChanged.connect(self.toggle_row_retry)
-		self.row_retry_variance[0].stateChanged.connect(self.toggle_row_retry_variance)
-		self.row_retry_variance[1].stateChanged.connect(self.toggle_retry_variance)
-		self.row_checkout[0].stateChanged.connect(self.toggle_row_checkout)
-		self.row_checkout[1].stateChanged.connect(self.toggle_checkout)
-		self.row_checkout_variance[0].stateChanged.connect(self.toggle_row_checkout_variance)
-		self.row_checkout_variance[1].stateChanged.connect(self.toggle_checkout_variance)
-		self.row_qty[0].stateChanged.connect(self.toggle_row_qty)
-		self.row_captcha[0].stateChanged.connect(self.toggle_row_captcha)
-		# self.row_captcha[1].stateChanged.connect(self.toggle_captcha)
-		# self.ui.table_widget_tasks.cellEntered.connect(self.test6)
+#================================================================================
+# TASK BUTTONS
+#================================================================================
 
-		# --------------------Task Buttons--------------------
 		self.ui.push_button_new_task.clicked.connect(self.new_task)
 		self.ui.push_button_save_task.clicked.connect(self.save_task)
 
-		self.ui.label_picture.setScaledContents(False)
-		self.ui.combo_box_store.currentIndexChanged.connect(self.load_types)
+		# self.ui.label_picture.setScaledContents(False)
+		# self.ui.combo_box_store.currentIndexChanged.connect(self.load_types)
+		self.ui.combo_box_task_type.currentTextChanged.connect(self.load_stores)
+		self.ui.combo_box_store.currentTextChanged.connect(self.load_search_options)
+		self.ui.combo_box_search_type.currentTextChanged.connect(self.load_task_options)
 		self.ui.push_button_start_tasks.setText('Start All')
 		self.ui.push_button_start_tasks.clicked.connect(self.start_tasks)
 		self.ui.push_button_stop_tasks.setText('Stop All')
 		self.ui.push_button_stop_tasks.clicked.connect(self.stop_tasks)
 		self.ui.push_button_delete_tasks.setText('Delete All')
 		self.ui.push_button_delete_tasks.clicked.connect(self.delete_all_tasks)
-		self.ui.line_edit_retry_delay.textChanged.connect(lambda: self.update_delay_label(self.ui.label_retry, self.ui.line_edit_retry_delay, self.ui.line_edit_retry_variance))
-		self.ui.line_edit_retry_variance.textChanged.connect(lambda: self.update_delay_label(self.ui.label_retry, self.ui.line_edit_retry_delay, self.ui.line_edit_retry_variance))
-		self.ui.line_edit_checkout_delay.textChanged.connect(lambda: self.update_delay_label(self.ui.label_checkout, self.ui.line_edit_checkout_delay, self.ui.line_edit_checkout_variance))
-		self.ui.line_edit_checkout_variance.textChanged.connect(lambda: self.update_delay_label(self.ui.label_checkout, self.ui.line_edit_checkout_delay, self.ui.line_edit_checkout_variance))
+		# self.ui.line_edit_retry_delay.textChanged.connect(lambda: self.update_delay_label(self.ui.label_retry, self.ui.line_edit_retry_delay, self.ui.line_edit_retry_variance))
+		# self.ui.line_edit_retry_variance.textChanged.connect(lambda: self.update_delay_label(self.ui.label_retry, self.ui.line_edit_retry_delay, self.ui.line_edit_retry_variance))
+		# self.ui.line_edit_checkout_delay.textChanged.connect(lambda: self.update_delay_label(self.ui.label_checkout, self.ui.line_edit_checkout_delay, self.ui.line_edit_checkout_variance))
+		# self.ui.line_edit_checkout_variance.textChanged.connect(lambda: self.update_delay_label(self.ui.label_checkout, self.ui.line_edit_checkout_delay, self.ui.line_edit_checkout_variance))
 		self.ui.push_button_test_custom_shopify.clicked.connect(self.test_shopify)
 
-		# --------------------Profile Buttons--------------------
+#================================================================================
+# PROFILE BUTTONS
+#================================================================================
+
 		self.ui.push_button_new_profile.clicked.connect(self.new_profile)
 		self.ui.push_button_save_profile.clicked.connect(self.save_profile)
 		self.ui.push_button_delete_all_profiles.clicked.connect(self.delete_all_profiles)
-		self.ui.push_button_delete_profile.clicked.connect(lambda: self.delete_profile(self.ui.list_widget_profiles.currentItem().data(QtCore.Qt.UserRole)))
+		self.ui.push_button_delete_profile.clicked.connect(lambda: self.delete_profile(self.ui.list_widget_profiles.currentItem()))
 		self.ui.list_widget_profiles.itemSelectionChanged.connect(lambda: self.toggle_button(self.ui.list_widget_profiles, self.ui.push_button_delete_profile))
 		self.ui.list_widget_profiles.clicked.connect(lambda: self.load_profile_info(self.ui.list_widget_profiles.currentItem().data(QtCore.Qt.UserRole)))
-		self.ui.check_box_same_as_shipping.toggled.connect(self.same_as_shipping)
-		self.ui.line_edit_shipping_address.textChanged.connect(lambda: self.copy_text(self.address_pair))
-		self.ui.line_edit_shipping_address_2.textChanged.connect(lambda: self.copy_text(self.address_2_pair))
-		self.ui.line_edit_shipping_city.textChanged.connect(lambda: self.copy_text(self.city_pair))
-		self.ui.line_edit_shipping_zip.textChanged.connect(lambda: self.copy_text(self.zip_pair))
-		self.ui.combo_box_shipping_state.currentIndexChanged.connect(lambda: self.copy_index(self.state_pair))
+		# self.ui.check_box_same_as_shipping.toggled.connect(self.same_as_shipping)
+		# self.ui.line_edit_shipping_address.textChanged.connect(lambda: self.copy_text(self.address_pair))
+		# self.ui.line_edit_shipping_address_2.textChanged.connect(lambda: self.copy_text(self.address_2_pair))
+		# self.ui.line_edit_shipping_city.textChanged.connect(lambda: self.copy_text(self.city_pair))
+		# self.ui.line_edit_shipping_zip.textChanged.connect(lambda: self.copy_text(self.zip_pair))
+		# self.ui.combo_box_shipping_state.currentIndexChanged.connect(lambda: self.copy_index(self.state_pair))
 
-		# --------------------Billing Buttons--------------------
+#================================================================================
+# BILLING BUTTONS
+#================================================================================
+
 		self.ui.push_button_new_billing.clicked.connect(self.new_billing_profile)
 		self.ui.push_button_save_billing.clicked.connect(self.save_billing_profile)
 		self.ui.push_button_delete_all_billing.clicked.connect(self.delete_all_billing_profiles)
-		self.ui.push_button_delete_billing.clicked.connect(lambda: self.delete_billing_profile(self.ui.list_widget_billing.currentItem().data(QtCore.Qt.UserRole)))
+		self.ui.push_button_delete_billing.clicked.connect(lambda: self.delete_billing_profile(self.ui.list_widget_billing.currentItem()))
 		self.ui.list_widget_billing.itemSelectionChanged.connect(lambda: self.toggle_button(self.ui.list_widget_billing, self.ui.push_button_delete_billing))
 		self.ui.list_widget_billing.clicked.connect(lambda: self.load_billing_info(self.ui.list_widget_billing.currentItem().data(QtCore.Qt.UserRole)))
 
-		# --------------------Proxy Buttons--------------------
+#================================================================================
+# PROXY BUTTONS
+#================================================================================
+
 		self.ui.push_button_new_proxies.clicked.connect(self.new_proxy_profile)
 		self.ui.push_button_import_proxies.clicked.connect(self.import_proxies)
 		self.ui.push_button_save_proxies.clicked.connect(self.save_proxy_profile)
 		self.ui.push_button_delete_all_proxies.clicked.connect(self.delete_all_proxy_profiles)
-		self.ui.push_button_delete_proxies.clicked.connect(lambda: self.delete_proxy_profile(self.ui.list_widget_proxies.currentItem().data(QtCore.Qt.UserRole)))
+		self.ui.push_button_delete_proxies.clicked.connect(lambda: self.delete_proxy_profile(self.ui.list_widget_proxies.currentItem()))
 		self.ui.list_widget_proxies.itemSelectionChanged.connect(lambda: self.toggle_button(self.ui.list_widget_proxies, self.ui.push_button_delete_proxies))
 		self.ui.plain_text_edit_proxies.textChanged.connect(self.update_proxy_count)
 		self.ui.list_widget_proxies.clicked.connect(lambda: self.load_proxy_info(self.ui.list_widget_proxies.currentItem().data(QtCore.Qt.UserRole)))
 
-		# --------------------Account Buttons--------------------
+#================================================================================
+# ACCOUNT BUTTONS
+#================================================================================
+
 		self.ui.pb_open_login.clicked.connect(self.open_login_window)
 		self.ui.pb_save_account.clicked.connect(self.save_account)
 
-		# --------------------Log Buttons--------------------
+#================================================================================
+# LOG BUTTONS
+#================================================================================
+
 		self.ui.push_button_export_log.clicked.connect(self.export_log)
 		self.ui.push_button_clear_log.clicked.connect(self.clear_log)
 		self.ui.line_edit_filter.textChanged.connect(self.filter_log)
 
 		# Show current app version in status bar
-		self.statusBar().showMessage('{}'.format(VERSION))
+		self.statusBar().showMessage(f'{VERSION}')
 
 		self.ui.tabWidget.tabBar().setObjectName('tab_widget_tasks')
+
+		self.ui.table_widget_tasks.selectionModel().selectionChanged.connect(self.select_task)
 
 		self.ui.table_widget_tasks.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Interactive)
 		self.ui.table_widget_tasks.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Interactive)
@@ -449,16 +376,15 @@ class GUI(QtWidgets.QMainWindow):
 		self.ui.table_widget_tasks.horizontalHeader().setSectionResizeMode(3, QtWidgets.QHeaderView.Interactive)
 		self.ui.table_widget_tasks.horizontalHeader().setSectionResizeMode(4, QtWidgets.QHeaderView.Interactive)
 		self.ui.table_widget_tasks.horizontalHeader().setSectionResizeMode(5, QtWidgets.QHeaderView.Interactive)
-		self.ui.table_widget_tasks.horizontalHeader().setSectionResizeMode(6, QtWidgets.QHeaderView.Interactive)
-		self.ui.table_widget_tasks.horizontalHeader().setSectionResizeMode(7, QtWidgets.QHeaderView.Interactive)
-		self.ui.table_widget_tasks.horizontalHeader().setSectionResizeMode(8, QtWidgets.QHeaderView.Stretch)
-		self.ui.table_widget_tasks.horizontalHeader().setSectionResizeMode(9, QtWidgets.QHeaderView.Interactive)
-		self.ui.table_widget_tasks.horizontalHeader().setSectionResizeMode(10, QtWidgets.QHeaderView.Fixed)
+		self.ui.table_widget_tasks.horizontalHeader().setSectionResizeMode(6, QtWidgets.QHeaderView.Fixed)
+		self.ui.table_widget_tasks.horizontalHeader().setSectionResizeMode(7, QtWidgets.QHeaderView.Stretch)
+		self.ui.table_widget_tasks.horizontalHeader().setSectionResizeMode(8, QtWidgets.QHeaderView.Fixed)
 		self.ui.table_widget_tasks.horizontalHeader().setSectionsClickable(False)
 		self.ui.table_widget_tasks.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
 		self.ui.table_widget_tasks.verticalHeader().setSectionsMovable(False)
 		self.ui.table_widget_tasks.verticalHeader().setSectionsClickable(False)
-		self.ui.table_widget_tasks.setColumnHidden(0, True)
+		self.ui.table_widget_tasks.hideColumn(0)
+		self.ui.table_widget_tasks.setFocusPolicy(QtCore.Qt.NoFocus)
 
 		self.ui.tw_accounts.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Fixed)
 		self.ui.tw_accounts.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
@@ -469,55 +395,29 @@ class GUI(QtWidgets.QMainWindow):
 		self.ui.tw_accounts.verticalHeader().setSectionsMovable(True)
 		self.ui.tw_accounts.verticalHeader().setSectionsClickable(False)
 		self.ui.tw_accounts.setColumnHidden(0, True)
-		# self.ui.table_widget_tasks.verticalHeader().setDefaultSectionSize(50)
-		self.ui.table_widget_tasks.horizontalHeader().setSectionsMovable(True)
+		# self.ui.table_widget_tasks.verticalHeader().setDefaultSectionSize(30)
+		# self.ui.table_widget_tasks.horizontalHeader().setSectionsMovable(True)
 		self.ui.table_widget_proxies.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
 		self.ui.table_widget_proxies.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
 		self.ui.table_widget_proxies.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Fixed)
 		self.ui.table_widget_proxies.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
-		self.ui.table_widget_proxies.horizontalHeader().setSectionsMovable(True)
+		# self.ui.table_widget_proxies.horizontalHeader().setSectionsMovable(True)
 
 		self.load_proxy_list()
-		self.load_task_list()
-		self.load_profile_list()
+		self.load_accounts()
 		self.load_billing_list()
+		self.load_profile_list()
+		self.load_task_list()
 		self.load_combo_box_profiles()
 		self.load_combo_box_billing()
 		self.load_combo_box_proxies()
-		self.load_accounts()
 
-		self.same_as_shipping()
-		self.update_proxy_count()
-		self.toggle_row_task_type()
-		self.toggle_row_task_name()
-		self.toggle_row_store()
-		self.toggle_row_search_type()
-		self.toggle_row_account()
-		self.toggle_accounts()
-		self.toggle_row_profile()
-		self.toggle_row_billing()
-		self.toggle_row_proxies()
-		self.toggle_proxies()
-		self.toggle_row_rotation()
-		self.toggle_row_search()
-		self.toggle_row_category()
-		self.toggle_category()
-		self.toggle_row_size()
-		self.toggle_size()
-		self.toggle_row_color()
-		self.toggle_color()
-		self.toggle_row_retry()
-		self.toggle_row_retry_variance()
-		self.toggle_retry_variance()
-		self.toggle_row_checkout()
-		self.toggle_checkout()
-		self.toggle_row_checkout_variance()
-		self.toggle_checkout_variance()
-		self.toggle_row_qty()
-		self.toggle_row_captcha()
-		self.new_task()
+		self.disable_mass_edit()
 
-		# --------------------Toggle Buttons--------------------
+#================================================================================
+# TOGGLE FUNCTIONS
+#================================================================================
+
 		self.toggle_button(self.ui.list_widget_profiles, self.ui.push_button_delete_profile)
 		self.toggle_button(self.ui.list_widget_billing, self.ui.push_button_delete_billing)
 		self.toggle_button(self.ui.list_widget_proxies, self.ui.push_button_delete_proxies)
@@ -525,7 +425,9 @@ class GUI(QtWidgets.QMainWindow):
 		self.ui.group_box_log.toggled.connect(lambda: self.toggle_log(self.ui.group_box_log, self.ui.frame_log))
 		self.ui.splitter.splitterMoved.connect(self.set_splitter_sizes)
 
-		# --------------------Style Options--------------------
+#================================================================================
+# STYLE OPTIONS
+#================================================================================
 		# Set app style
 		self.styles = Stylesheet()
 		app.setStyleSheet(self.styles.dark_theme())
@@ -619,15 +521,17 @@ class GUI(QtWidgets.QMainWindow):
 		self.threeDS = None
 
 		# self.ui.pb_login.clicked.connect(self.login)
-		self.ui.pb_step_1.clicked.connect(self.add_to_cart)
-		self.ui.pb_step_2.clicked.connect(self.get_basket)
-		self.ui.pb_step_3.clicked.connect(self.checkout)
-		self.ui.pb_step_4.clicked.connect(self.sign_in_as_guest)
-		self.ui.pb_step_5.clicked.connect(self.patch_item_info)
-		self.ui.pb_step_6.clicked.connect(self.patch_guest_info)
-		self.ui.pb_step_7.clicked.connect(self.load_browser)
+		# self.ui.pb_step_1.clicked.connect(self.add_to_cart)
+		# self.ui.pb_step_2.clicked.connect(self.get_basket)
+		# self.ui.pb_step_3.clicked.connect(self.checkout)
+		# self.ui.pb_step_4.clicked.connect(self.sign_in_as_guest)
+		# self.ui.pb_step_5.clicked.connect(self.patch_item_info)
+		# self.ui.pb_step_6.clicked.connect(self.patch_guest_info)
+		# self.ui.pb_step_7.clicked.connect(self.load_browser)
 
-	#--------------------Account Functions--------------------
+#================================================================================
+# ACCOUNT FUNCTIONS
+#================================================================================
 
 	def load_accounts(self):
 		self.ui.tw_accounts.setRowCount(0)
@@ -693,7 +597,7 @@ class GUI(QtWidgets.QMainWindow):
 		self.login_window = QtWebEngineWidgets.QWebEngineView()
 		# url = self.ui.cb_login_store.currentText()
 		# self.domain = url.split('/')[-2].split('.')[-2]
-		url = 'https://gsp.target.com/gsp/authentications/v1/auth_codes?client_id=ecom-web-1.0.0&state=1585456116676&redirect_uri=https%3A%2F%2Fwww.target.com%2F&assurance_level=M'
+		url = 'https://gsp.target.com/gsp/authentications/v1/auth_codes?client_id=ecom-web-1.0.0&state=1585456116676&redirect_uri=https://www.target.com/&assurance_level=M'
 		self.login_window.load(QtCore.QUrl(url))
 		self.login_window.page().profile().cookieStore().deleteAllCookies()
 		self.cookie_store = self.login_window.page().profile().cookieStore()
@@ -703,7 +607,9 @@ class GUI(QtWidgets.QMainWindow):
 	def on_cookie_added(self, cookie):
 		self.cookie_jar.insertCookie(cookie)
 
-	#--------------------Test Functions--------------------
+#================================================================================
+# TEST FUNCTIONS
+#================================================================================
 
 	def add_to_cart(self):
 		print('Adding to cart')
@@ -873,8 +779,8 @@ class GUI(QtWidgets.QMainWindow):
 		self.ui.label_tested.setText(self.shopify['status'])
 		print(self.shopify)
 
-	def test(self):
-		self.render_view.toHtml(self.lol)
+	# def test(self):
+	# 	self.render_view.toHtml(self.lol)
 
 	def lol(self, data):
 		print(data)
@@ -924,6 +830,9 @@ class GUI(QtWidgets.QMainWindow):
 	def unavail(self):
 		self.captcha_window.unavail()
 
+	def test(self):
+		self.tasks[self.task_ids[0]].store.test()
+
 	def test2(self):
 		self.captcha_window.test('https://shop.funko.com')
 
@@ -942,363 +851,235 @@ class GUI(QtWidgets.QMainWindow):
 		else:
 			print('Item {} not supported'.format(type(item)))
 
-	#--------------------Mouse Events--------------------
+#================================================================================
+# MOUSE FUNCTIONS
+#================================================================================
 
-	def keyPressEvent(self, e):
-		if e.key() == QtCore.Qt.Key_Control:
-			self.ctrl_key = True
+# Nothing as of yet, may implement later
 
-	def keyReleaseEvent(self, e):
-		if e.key() == QtCore.Qt.Key_Control:
-			self.ctrl_key = False
+#================================================================================
+# TOGGLE FUNCTIONS
+#================================================================================
 
-	def eventFilter(self, obj, e):
-		if e.type() == QtCore.QEvent.MouseButtonPress and e.button() == QtCore.Qt.LeftButton:
-			row = self.ui.table_widget_tasks.rowAt(e.y())
-			if row < 0:
-				self.ui.table_widget_tasks.selectionModel().clearSelection()
-			else:
-				if not self.ctrl_key:
-					self.ui.table_widget_tasks.selectionModel().clearSelection()
-
-		if e.type() == QtCore.QEvent.MouseButtonRelease and e.button() == QtCore.Qt.LeftButton:
-			self.selection_model = self.ui.table_widget_tasks.selectionModel()
-			self.task_ids = []
-			if self.selection_model.hasSelection():
-				self.toggle_delete_task(True)
-				for i in self.ui.table_widget_tasks.selectedIndexes()[0::10]:
-					task_id = i.data((QtCore.Qt.UserRole))
-					self.task_ids.append(task_id)
-					self.tasks[task_id].set_font_bold(True)
-				if len(self.selection_model.selectedRows()) > 1:
-				# if len(self.selection_model.selectedRows()) > 1:
-					# Multiple rows selected
-					self.enable_mass_edit()
-				else:
-					# One row selected
-					self.disable_mass_edit()
-					task = self.tasks[self.task_ids[0]]
-					if task.image_large:
-						self.ui.label_picture.setPixmap(task.image_large)
-
-					self.load_task_info(task)
-				if len(self.task_ids) < self.ui.table_widget_tasks.rowCount():
-					self.toggle_task_buttons(len(self.task_ids))
-				else:
-					self.toggle_task_buttons()
-			else:
-				# No row(s) selected
-				self.new_task()
-				self.toggle_task_buttons()
-				# self.ui.label_product.setPixmap(self.icon_logo)
-				self.ui.label_picture.setPixmap(self.icon_logo)
-				for task in self.tasks.values():
-					task.set_font_bold(False)
-		return QtCore.QObject.event(obj, e)
-
-	#--------------------Toggle Functions--------------------
-
-	def toggle_task_buttons(self, i=None):
-		if i:
-			self.ui.push_button_start_tasks.setText(f'Start {i}')
-			self.ui.push_button_stop_tasks.setText(f'Stop {i}')
-			self.ui.push_button_delete_tasks.setText(f'Delete {i}')
+	def toggle_cbe_task_type(self):
+		if self.ui.cbe_task_type.isChecked():
+			self.ui.label_task_type.setEnabled(True)
+			self.ui.combo_box_task_type.setEnabled(True)
 		else:
-			self.ui.push_button_start_tasks.setText(f'Start All')
-			self.ui.push_button_stop_tasks.setText(f'Stop All')
-			self.ui.push_button_delete_tasks.setText(f'Delete All')
+			self.ui.label_task_type.setEnabled(False)
+			self.ui.combo_box_task_type.setEnabled(False)
 
-	def toggle_delete_task(self, toggle):
-		self.ui.push_button_delete_task.setEnabled(toggle)
-
-	def toggle_row_task_type(self):
-		if self.row_task_type[0].isChecked():
-			for item in self.row_task_type[1:]:
-				item.setEnabled(True)
-			self.row_task_type[2].setCurrentIndex(0)
-			if len(self.task_ids) > 1:
-				self.row_task_type[3].setEnabled(False)
-				self.row_task_type[4].setEnabled(False)
-				self.row_task_type[4].setText('1')
-			else:
-				self.row_task_type[4].setText('1')
+	def toggle_cbe_store(self):
+		if self.ui.cbe_store.isChecked():
+			self.ui.label_store.setEnabled(True)
+			self.ui.combo_box_store.setEnabled(True)
 		else:
-			for item in self.row_task_type[1:]:
-				item.setEnabled(False)
-			self.row_task_type[2].setCurrentIndex(-1)
-			self.row_task_type[4].setText('1')
+			self.ui.label_store.setEnabled(False)
+			self.ui.combo_box_store.setEnabled(False)
 
-	def toggle_row_task_name(self):
-		if self.row_task_name[0].isChecked():
-			for item in self.row_task_name[1:]:
-				item.setEnabled(True)
-			self.row_task_name[2].clear()
+	def toggle_cbe_search_type(self):
+		if self.ui.cbe_search_type.isChecked():
+			self.ui.label_search_type.setEnabled(True)
+			self.ui.combo_box_search_type.setEnabled(True)
 		else:
-			for item in self.row_task_name[1:]:
-				item.setEnabled(False)
-			self.row_task_name[2].clear()
+			self.ui.label_search_type.setEnabled(False)
+			self.ui.combo_box_search_type.setEnabled(False)
 
-	def toggle_row_store(self):
-		if self.row_store[0].isChecked():
-			for item in self.row_store[1:]:
-				item.setEnabled(True)
-			self.row_store[2].setCurrentIndex(0)
+	def toggle_cbe_search(self):
+		if self.ui.cbe_search.isChecked():
+			self.ui.label_search.setEnabled(True)
+			self.ui.line_edit_search.setEnabled(True)
 		else:
-			for item in self.row_store[1:]:
-				item.setEnabled(False)
-			self.row_store[2].setCurrentIndex(-1)
+			self.ui.label_search.setEnabled(False)
+			self.ui.line_edit_search.setEnabled(False)
 
-	def toggle_custom_shopify(self):
-		if self.row_store[2].currentText() == 'Custom Shopify':
-			self.row_store[2].setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-			self.row_store[3].clear()
-			self.row_store[3].show()
-			self.row_store[4].show()
-			self.row_store[-1].show()
-			self.ui.label_tested.setText('Not Tested')
+	def toggle_cbe_task_name(self):
+		if self.ui.cbe_task_name.isChecked():
+			self.ui.label_task_name.setEnabled(True)
+			self.ui.line_edit_task_name.setEnabled(True)
 		else:
-			self.row_store[2].setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
-			self.row_store[3].hide()
-			self.row_store[4].hide()
-			self.row_store[-1].hide()
+			self.ui.label_task_name.setEnabled(False)
+			self.ui.line_edit_task_name.setEnabled(False)
 
-	def toggle_row_search_type(self):
-		if self.row_search_type[0].isChecked():
-			for item in self.row_search_type[1:]:
-				item.setEnabled(True)
-			self.row_search_type[2].setCurrentIndex(0)
+	def toggle_cbe_qty(self):
+		if self.ui.cbe_qty.isChecked():
+			self.ui.label_qty.setEnabled(True)
+			self.ui.combo_box_qty.setEnabled(True)
 		else:
-			for item in self.row_search_type[1:]:
-				item.setEnabled(False)
-			self.row_search_type[2].setCurrentIndex(-1)
+			self.ui.label_qty.setEnabled(False)
+			self.ui.combo_box_qty.setEnabled(False)
 
-	def toggle_row_account(self):
-		if self.row_account[0].isChecked():
-			self.row_account[1].setEnabled(True)
-			self.row_account[1].setChecked(False)
+	def toggle_cbe_account(self):
+		if self.ui.cbe_account.isChecked():
+			self.ui.check_box_account.setEnabled(True)
 		else:
-			self.row_account[1].setEnabled(False)
-			self.row_account[1].setChecked(False)
+			self.ui.check_box_account.setEnabled(False)
+
+		self.ui.check_box_account.setChecked(False)
 		self.toggle_accounts()
 
-	def toggle_accounts(self):
-		if self.row_account[1].isChecked():
-			self.row_account[2].setEnabled(True)
+	def toggle_cbe_profile(self):
+		if self.ui.cbe_profile.isChecked():
+			self.ui.label_profile.setEnabled(True)
+			self.ui.combo_box_profile.setEnabled(True)
 		else:
-			self.row_account[2].setEnabled(False)
-		self.row_account[2].setCurrentIndex(-1)
+			self.ui.label_profile.setEnabled(False)
+			self.ui.combo_box_profile.setEnabled(False)
 
-	def toggle_row_profile(self):
-		if self.row_profile[0].isChecked():
-			for item in self.row_profile[1:]:
-				item.setEnabled(True)
-			# self.row_profile[2].setCurrentIndex(0)
+	def toggle_cbe_billing(self):
+		if self.ui.cbe_billing.isChecked():
+			self.ui.label_billing.setEnabled(True)
+			self.ui.combo_box_billing.setEnabled(True)
 		else:
-			for item in self.row_profile[1:]:
-				item.setEnabled(False)
-		self.row_profile[2].setCurrentIndex(-1)
+			self.ui.label_billing.setEnabled(False)
+			self.ui.combo_box_billing.setEnabled(False)
 
-	def toggle_row_billing(self):
-		if self.row_billing[0].isChecked():
-			for item in self.row_billing[1:]:
-				item.setEnabled(True)
+	def toggle_cbe_proxies(self):
+		if self.ui.cbe_proxies.isChecked():
+			self.ui.check_box_proxies.setEnabled(True)
 		else:
-			for item in self.row_billing[1:]:
-				item.setEnabled(False)
-		self.row_billing[2].setCurrentIndex(-1)
+			self.ui.check_box_proxies.setEnabled(False)
 
-	def toggle_row_proxies(self):
-		if self.row_proxies[0].isChecked():
-			self.row_proxies[1].setEnabled(True)
-			self.row_proxies[1].setChecked(True)
-		else:
-			self.row_proxies[1].setEnabled(False)
-			self.row_proxies[1].setChecked(False)
+		self.ui.check_box_proxies.setChecked(False)
 		self.toggle_proxies()
 
-	def toggle_proxies(self):
-		if self.row_proxies[1].isChecked():
-			self.row_proxies[2].setEnabled(True)
-			self.load_combo_box_proxies()
-			self.row_proxies[2].setCurrentIndex(-1)
+	def toggle_cbe_rotation(self):
+		if self.ui.cbe_rotation.isChecked():
+			self.ui.label_rotation.setEnabled(True)
+			self.ui.combo_box_rotation.setEnabled(True)
 		else:
-			self.row_proxies[2].setEnabled(False)
-			if self.row_proxies[0].isChecked():
-				self.row_proxies[2].clear()
-				self.row_proxies[2].addItem('localhost')
-			else:
-				self.row_proxies[2].setCurrentIndex(-1)
+			self.ui.label_rotation.setEnabled(False)
+			self.ui.combo_box_rotation.setEnabled(False)
 
-	def toggle_row_rotation(self):
-		if self.row_rotation[0].isChecked():
-			for item in self.row_rotation[1:]:
-				item.setEnabled(True)
-			self.row_rotation[2].setCurrentIndex(0)
+	def toggle_cbe_size(self):
+		if self.ui.cbe_size.isChecked():
+			self.ui.check_box_size.setEnabled(True)
 		else:
-			for item in self.row_rotation[1:]:
-				item.setEnabled(False)
-			self.row_rotation[2].setCurrentIndex(-1)
+			self.ui.check_box_size.setEnabled(False)
 
-	def toggle_row_search(self):
-		if self.row_search[0].isChecked():
-			for item in self.row_search[1:]:
-				item.setEnabled(True)
-		else:
-			for item in self.row_search[1:]:
-				item.setEnabled(False)
-		self.row_search[2].clear()
-
-	def toggle_row_category(self):
-		if self.row_category[0].isChecked():
-			self.row_category[1].setEnabled(True)
-			self.row_category[1].setChecked(True)
-		else:
-			self.row_category[1].setEnabled(False)
-			self.row_category[1].setChecked(False)
-		self.toggle_category()
-
-	def toggle_category(self):
-		if self.row_category[1].isChecked():
-			self.row_category[2].setEnabled(True)
-			self.load_combo_box_categories()
-		else:
-			self.row_category[2].setEnabled(False)
-			if self.row_category[0].isChecked():
-				self.row_category[2].clear()
-				self.row_category[2].addItem('N/A')
-			else:
-				self.row_category[2].setCurrentIndex(-1)
-
-	def toggle_row_size(self):
-		if self.row_size[0].isChecked():
-			self.row_size[1].setEnabled(True)
-			self.row_size[1].setChecked(True)
-		else:
-			self.row_size[1].setEnabled(False)
-			self.row_size[1].setChecked(False)
+		self.ui.check_box_size.setChecked(False)
 		self.toggle_size()
 
-	def toggle_size(self):
-		if self.row_size[1].isChecked():
-			self.row_size[2].setEnabled(True)
-			self.load_combo_box_sizes()
+	def toggle_cbe_color(self):
+		if self.ui.cbe_color.isChecked():
+			self.ui.check_box_color.setEnabled(True)
 		else:
-			self.row_size[2].setEnabled(False)
-			if self.row_size[0].isChecked():
-				self.row_size[2].clear()
-				self.row_size[2].addItem('N/A')
-			else:
-				self.row_size[2].setCurrentIndex(-1)
+			self.ui.check_box_color.setEnabled(False)
 
-	def toggle_row_color(self):
-		if self.row_color[0].isChecked():
-			self.row_color[1].setEnabled(True)
-			self.row_color[1].setChecked(True)
+		self.ui.check_box_color.setChecked(False)
+		self.toggle_color()
+
+	def toggle_cbe_category(self):
+		if self.ui.cbe_category.isChecked():
+			self.ui.check_box_category.setEnabled(True)
 		else:
-			self.row_color[1].setEnabled(False)
-			self.row_color[1].setChecked(False)
+			self.ui.check_box_category.setEnabled(False)
+
+		self.ui.check_box_category.setChecked(False)
+		self.toggle_category()
+
+	def toggle_cbe_price_range(self):
+		if self.ui.cbe_price_range.isChecked():
+			self.ui.check_box_price_range.setEnabled(True)
+		else:
+			self.ui.check_box_price_range.setEnabled(False)
+
+		self.ui.check_box_price_range.setChecked(False)
+		self.toggle_price_range()
+
+	def toggle_cbe_delay_range(self):
+		if self.ui.cbe_delay_range.isChecked():
+			self.ui.label_delay_range.setEnabled(True)
+			self.ui.line_edit_delay_min.setEnabled(True)
+			self.ui.line_edit_delay_max.setEnabled(True)
+		else:
+			self.ui.label_delay_range.setEnabled(False)
+			self.ui.line_edit_delay_min.setEnabled(False)
+			self.ui.line_edit_delay_max.setEnabled(False)
+
+	def toggle_cbe_captcha(self):
+		if self.ui.cbe_captcha.isChecked():
+			self.ui.check_box_captcha.setEnabled(True)
+		else:
+			self.ui.check_box_captcha.setEnabled(False)
+
+		self.ui.check_box_captcha.setChecked(False)
+
+	def toggle_accounts(self):
+		self.ui.combo_box_account.clear()
+		if self.ui.cbe_account.isChecked():
+			if self.ui.check_box_account.isChecked():
+				self.ui.combo_box_account.setEnabled(True)
+				self.ui.combo_box_account.setCurrentIndex(-1)
+			else:
+				self.ui.combo_box_account.setEnabled(False)
+				self.ui.combo_box_account.addItem('N/A')
+		else:
+			self.ui.combo_box_account.setEnabled(False)
+
+	def toggle_proxies(self):
+		self.ui.combo_box_proxies.clear()
+		if self.ui.cbe_proxies.isChecked():
+			if self.ui.check_box_proxies.isChecked():
+				self.ui.combo_box_proxies.setEnabled(True)
+				self.load_combo_box_proxies()
+				self.ui.combo_box_proxies.setCurrentIndex(0)
+			else:
+				self.ui.combo_box_proxies.setEnabled(False)
+				self.ui.combo_box_proxies.addItem('localhost')
+		else:
+			self.ui.combo_box_proxies.setEnabled(False)
+
+	def toggle_size(self):
+		self.ui.combo_box_size.clear()
+		if self.ui.cbe_size.isChecked():
+			if self.ui.check_box_size.isChecked():
+				self.ui.combo_box_size.setEnabled(True)
+				self.load_combo_box_sizes()
+				self.ui.combo_box_size.setCurrentIndex(0)
+			else:
+				self.ui.combo_box_size.setEnabled(False)
+				self.ui.combo_box_size.addItem('Any')
+		else:
+			self.ui.combo_box_size.setEnabled(False)
 
 	def toggle_color(self):
-		if self.row_color[1].isChecked():
-			self.row_color[2].setEnabled(True)
+		self.ui.line_edit_color.clear()
+		if self.ui.cbe_color.isChecked():
+			if self.ui.check_box_color.isChecked():
+				self.ui.line_edit_color.setEnabled(True)
+			else:
+				self.ui.line_edit_color.setEnabled(False)
+				self.ui.line_edit_color.setText('Any')
 		else:
-			self.row_color[2].setEnabled(False)
-			self.row_color[2].clear()
+			self.ui.line_edit_color.setEnabled(False)
 
-	def toggle_row_retry(self):
-		if self.row_retry[0].isChecked():
-			self.row_retry[1].setEnabled(True)
-			self.row_retry[2].setEnabled(True)
-			self.row_retry[3].setEnabled(True)
-			self.row_retry[-1].setEnabled(True)
+	def toggle_category(self):
+		self.ui.combo_box_category.clear()
+		if self.ui.cbe_category.isChecked():
+			if self.ui.check_box_category.isChecked():
+				self.ui.combo_box_category.setEnabled(True)
+				self.load_combo_box_categories()
+				self.ui.combo_box_category.setCurrentIndex(0)
+			else:
+				self.ui.combo_box_category.setEnabled(False)
+				self.ui.combo_box_category.addItem('Any')
 		else:
-			self.row_retry[1].setEnabled(False)
-			self.row_retry[2].setEnabled(False)
-			self.row_retry[2].clear()
-			self.row_retry[3].setEnabled(False)
-			self.row_retry[-1].setEnabled(False)
+			self.ui.combo_box_category.setEnabled(False)
 
-	def toggle_row_retry_variance(self):
-		if self.row_retry_variance[0].isChecked():
-			self.row_retry_variance[1].setEnabled(True)
-			self.row_retry_variance[1].setChecked(True)
+	def toggle_price_range(self):
+		self.ui.line_edit_price_min.clear()
+		self.ui.line_edit_price_max.clear()
+		if self.ui.cbe_price_range.isChecked():
+			if self.ui.check_box_price_range.isChecked():
+				self.ui.line_edit_price_min.setEnabled(True)
+				self.ui.line_edit_price_max.setEnabled(True)
+			else:
+				self.ui.line_edit_price_min.setEnabled(False)
+				self.ui.line_edit_price_max.setEnabled(False)
 		else:
-			self.row_retry_variance[1].setEnabled(False)
-			self.row_retry_variance[1].setChecked(False)
-
-	def toggle_retry_variance(self):
-		if self.row_retry_variance[1].isChecked():
-			self.row_retry_variance[2].setEnabled(True)
-			self.row_retry_variance[3].setEnabled(True)
-		else:
-			self.row_retry_variance[2].setEnabled(False)
-			self.row_retry_variance[2].clear()
-			self.row_retry_variance[3].setEnabled(False)
-
-	def toggle_row_checkout(self):
-		if self.row_checkout[0].isChecked():
-			self.row_checkout[1].setEnabled(True)
-			self.row_checkout[1].setChecked(True)
-			self.row_checkout[-1].setEnabled(True)
-		else:
-			self.row_checkout[1].setEnabled(False)
-			self.row_checkout[1].setChecked(False)
-			self.row_checkout[-1].setEnabled(False)
-
-	def toggle_checkout(self):
-		if self.row_checkout[1].isChecked():
-			self.row_checkout[2].setEnabled(True)
-			self.row_checkout[3].setEnabled(True)
-		else:
-			self.row_checkout[2].setEnabled(False)
-			self.row_checkout[2].clear()
-			self.row_checkout[3].setEnabled(False)
-
-	def toggle_row_checkout_variance(self):
-		if self.row_checkout_variance[0].isChecked():
-			self.row_checkout_variance[1].setEnabled(True)
-			self.row_checkout_variance[1].setChecked(True)
-		else:
-			self.row_checkout_variance[1].setEnabled(False)
-			self.row_checkout_variance[1].setChecked(False)
-
-	def toggle_checkout_variance(self):
-		if self.row_checkout_variance[1].isChecked():
-			self.row_checkout_variance[2].setEnabled(True)
-			self.row_checkout_variance[3].setEnabled(True)
-		else:
-			self.row_checkout_variance[2].setEnabled(False)
-			self.row_checkout_variance[2].clear()
-			self.row_checkout_variance[3].setEnabled(False)
-
-	def toggle_row_qty(self):
-		if self.row_qty[0].isChecked():
-			self.row_qty[1].setEnabled(True)
-			self.row_qty[2].setEnabled(True)
-			self.row_qty[2].setCurrentIndex(0)
-		else:
-			self.row_qty[1].setEnabled(False)
-			self.row_qty[2].setEnabled(False)
-			self.row_qty[2].setCurrentIndex(-1)
-
-	def toggle_row_captcha(self):
-		if self.row_captcha[0].isChecked():
-			self.row_captcha[1].setEnabled(True)
-			self.row_captcha[1].setCheckState(QtCore.Qt.PartiallyChecked)
-		else:
-			self.row_captcha[1].setEnabled(False)
-			self.row_captcha[1].setChecked(False)
-
-	# def toggle_captcha(self):
-	# 	if self.row_captcha[1].isEnabled():
-	# 		if self.row_captcha[1].checkState() == QtCore.Qt.Unchecked:
-	# 			self.row_captcha[2].setText('The Gecko App will ignore captcha')
-	# 		elif self.row_captcha[1].checkState() == QtCore.Qt.PartiallyChecked:
-	# 			self.row_captcha[2].setText('The Gecko App will detect captcha')
-	# 		elif self.row_captcha[1].checkState() == QtCore.Qt.Checked:
-	# 			self.row_captcha[2].setText('The Gecko App will require captcha')
-	# 	else:
-	# 		self.row_captcha[2].clear()
+			self.ui.line_edit_price_min.setEnabled(False)
+			self.ui.line_edit_price_max.setEnabled(False)
 
 	def toggle_mask_proxies(self):
 		for task in self.tasks.values():
@@ -1306,7 +1087,9 @@ class GUI(QtWidgets.QMainWindow):
 			# task.mask_proxies(self.ui.check_box_mask_proxies.checkState())
 		self.ui.table_widget_tasks.resizeColumnToContents(7)
 
-	#--------------------Captcha Window--------------------
+#================================================================================
+# CAPTCHA FUNCTIONS
+#================================================================================
 
 	def open_captcha_window(self):
 		self.captcha_window.show()
@@ -1389,45 +1172,107 @@ class GUI(QtWidgets.QMainWindow):
 	# def poll_token(self, task_id, store_name):
 	# 	self.tasks[task_id].token = self.queues[store_name].get_token()
 
-	#--------------------Custom Signal Functions--------------------
+#================================================================================
+# SIGNAL FUNCTIONS
+#================================================================================
 
-	def update_task_status(self, message, item):
-		row = self.ui.table_widget_tasks.row(item)
-		self.ui.table_widget_tasks.item(row, 8).setText(message)
+	def update_task_title(self, task_id):
+		self.tasks[task_id].set_title()
+		# row = self.ui.table_widget_tasks.row(item)
+		# self.ui.table_widget_tasks.item(row, 4).setText(title)
+
+	def update_task_image(self, task_id):
+		self.tasks[task_id].set_image()
+		self.ui.table_widget_tasks.resizeColumnToContents(5)
+
+	def update_task_size(self, task_id):
+		self.tasks[task_id].set_size()
+		self.ui.table_widget_tasks.resizeColumnToContents(6)
+
+	def update_task_proxy(self, task_id):
+		self.tasks[task_id].set_proxy()
+
+	def update_task_delay(self, task_id):
+		self.tasks[task_id].set_delay()
+
+	def update_task_status(self, task_id):
+		self.tasks[task_id].set_status()
+		# row = self.ui.table_widget_tasks.row(item)
+		# self.ui.table_widget_tasks.item(row, 8).setText(message)
 		# self.ui.table_widget_tasks.resizeColumnToContents(8)
 
-	def update_delay(self, message, item):
-		row = self.ui.table_widget_tasks.row(item)
-		self.ui.table_widget_tasks.item(row, 9).setText(message)
+	def update_task_run(self, task_id):
+		self.tasks[task_id].set_run()
 
-	def update_task_title(self, title, item):
-		row = self.ui.table_widget_tasks.row(item)
-		self.ui.table_widget_tasks.item(row, 4).setText(title)
+	def update_task_sleep(self, task_id):
+		self.tasks[task_id].set_sleep()
 
 	def update_task_log(self, message):
 		self.post_to_log(message)
 
-	#--------------------Core Functions--------------------
+#================================================================================
+# CORE FUNCTIONS
+#================================================================================
 
-	def load_types(self, index):
+	def select_task(self):
+		self.task_ids = []
+		data = self.ui.table_widget_tasks.selectionModel().selectedIndexes()[::9]
+		for i in data:
+			task_id = i.data((QtCore.Qt.UserRole))
+			self.task_ids.append(task_id)
+
+		task_count = len(self.task_ids)
+
+		self.disable_mass_edit()
+		if task_count == 1:
+			# Single row selected
+			self.load_task_info(self.task_ids[0])
+		elif task_count > 1:
+			# Multiple row selected
+			self.enable_mass_edit()
+		else:
+			# No row selected
+			self.new_task()
+
+	def load_stores(self, task_type):
+		self.ui.combo_box_store.clear()
+		for store in self.stores:
+			for key, value in store['task_type'].items():
+				if task_type == key and value:
+					self.ui.combo_box_store.addItem(store['url'])
+
+	def load_search_options(self, store_type):
 		self.ui.combo_box_search_type.clear()
-		self.ui.combo_box_task_type.clear()
-		data = self.ui.combo_box_store.currentData(QtCore.Qt.UserRole)
-		if data:
-			# Search type
-			if 'k' in data:
-				self.ui.combo_box_search_type.addItem('Keywords')
-			if 'd' in data:
-				self.ui.combo_box_search_type.addItem('Direct Link')
-			if 'v' in data:
-				self.ui.combo_box_search_type.addItem('Variant')
-			# Task type
-			if 'n' in data:
-				self.ui.combo_box_task_type.addItem('Normal')
-			if 'm' in data:
-				self.ui.combo_box_task_type.addItem('Monitor')
-			if 'r' in data:
-				self.ui.combo_box_task_type.addItem('Restock')
+		for store in self.stores:
+			if store_type == store['url']:
+				for key, value in store['search_type'].items():
+					if value:
+						self.ui.combo_box_search_type.addItem(key)
+				
+				break
+
+	def load_task_options(self, search_type):
+		print(f'Search type is: {search_type}')
+
+	# def load_types(self, index):
+	# 	self.ui.combo_box_search_type.clear()
+	# 	self.ui.combo_box_task_type.clear()
+	# 	data = self.ui.combo_box_store.currentData(QtCore.Qt.UserRole)
+	# 	if data:
+	# 		# Search type
+	# 		if 'k' in data:
+	# 			self.ui.combo_box_search_type.addItem('Keywords')
+	# 		if 'd' in data:
+	# 			self.ui.combo_box_search_type.addItem('Direct Link')
+	# 		if 'v' in data:
+	# 			self.ui.combo_box_search_type.addItem('Variant')
+	# 		# Task type
+	# 		if 'n' in data:
+	# 			self.ui.combo_box_task_type.addItem('Normal')
+	# 		if 'm' in data:
+	# 			self.ui.combo_box_task_type.addItem('Monitor')
+	# 		if 'r' in data:
+	# 			self.ui.combo_box_task_type.addItem('Restock')
 
 	def closeEvent(self, event):
 		self.captcha_window.close()
@@ -1594,7 +1439,9 @@ class GUI(QtWidgets.QMainWindow):
 	def convert_to_number(self, item):
 		return int(item)
 
-	#--------------------Group Box Tasks Functions--------------------
+#================================================================================
+# GROUP BOX TASK FUNCTIONS
+#================================================================================
 
 	def start_tasks(self):
 		if len(self.task_ids) > 0:
@@ -1619,13 +1466,15 @@ class GUI(QtWidgets.QMainWindow):
 	def delete_all_tasks(self):
 		if self.confirmation_dialog('Please Confirm', 'Are you sure you want to delete all tasks?'):
 			self.tgadb.delete_all_tasks()
+			self.ui.table_widget_tasks.setRowCount(0)
 			self.post_to_log('Deleted all tasks successfully')
-			self.task_ids = []
 
 	def open_captcha(self):
 		pass
 
-	#--------------------Group Box Log Functions--------------------
+#================================================================================
+# GROUP BOX LOG FUNCTIONS
+#================================================================================
 
 	def filter_log(self):
 		pass
@@ -1667,110 +1516,149 @@ class GUI(QtWidgets.QMainWindow):
 	def post_to_log(self, message):
 		self.ui.plainTextEdit.appendPlainText('[{}] {}'.format(self.current_datetime(), message))
 
-	#--------------------Tab Widget Task Functions--------------------
+#================================================================================
+# TASK PAGE
+#================================================================================
 
 	def load_task_list(self):
-		self.ui.table_widget_tasks.setRowCount(0)
-		data = self.tgadb.get_all_tasks()
-		if data:
-			self.create_task(data)
-		else:
-			print('there is no data')
+		self.create_task(self.tgadb.get_all_tasks())
 
-	def edit_tasks(self, data):
-		print(type(data))
-		print(data)
-
-	def create_task(self, data, task_id=None, update=False):
-		if task_id:
-			row = self.ui.table_widget_tasks.row(self.tasks[task_id].widget_task_id)
-		for a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, aa, ab, ac, ad in data:
-			profile_data = self.tgadb.get_profile(k)
-			billing_data = self.tgadb.get_billing(l)
-			if j is not None:
-				account_data = self.tgadb.get_account(j)
-				for da, db, dc, dd in account_data:
-					account = Account(da, db, dc, dd)
-			else:
-				account = Account()
-			if n is not None:
-				proxy_data = self.tgadb.get_proxy(n)
-				for da, db, dc in proxy_data:
-					proxy = Proxy(da, db, dc)
-			else:
-				proxy = Proxy()
-			for ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq in profile_data:
-				profile = Profile(ba, bb, bc, bd, be, bf, bg, bh, bi, bj, bk, bl, bm, bn, bo, bp, bq)
-			for ca, cb, cc, cd ,ce, cf, cg, ch in billing_data:
-				billing = Billing(ca, cb, cc, cd, ce, cf, cg, ch)
-			# for da, db, dc, dd in account_data:
-			# 	account = Account(da, db, dc, dd)
-
-			task = Task(a, b, c, d, e, f, g, h, i, account, profile, billing, m, proxy, o, p, q, r, s, t, u, v, w, x, y, z, aa, ab, ac, ad)
+	def create_task(self, task_data):
+		for a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z, aa in task_data:
+			account = self.accounts[j] if j else None
+			profile = self.profiles[k] if k else None
+			billing = self.billing[l] if l else None
+			proxies = self.proxies[n] if n else None
+			task = Task(
+				task_id=a,
+				task_type=b,
+				store_name=c,
+				custom_store=d,
+				search_type=e,
+				search=f,
+				task_name=g,
+				qty=h,
+				check_box_account=i,
+				account=account,
+				profile=profile,
+				billing=billing,
+				check_box_proxies=m,
+				proxies=proxies,
+				rotation=o,
+				check_box_size=p,
+				size=q,
+				check_box_color=r,
+				color=s,
+				check_box_category=t,
+				category=u,
+				check_box_price_range=v,
+				price_min=w,
+				price_max=x,
+				delay_min=y,
+				delay_max=z,
+				check_box_captcha=aa
+			)
 			task.update_log.connect(self.update_task_log)
 			task.button_start.clicked.connect(task.start_task)
 			task.button_stop.clicked.connect(task.stop_task)
 			task.button_delete.clicked.connect(task.delete_task)
+			# task.button_account.clicked.connect(task.store.account_login)
 			task.started.connect(task.enable_stop)
 			task.finished.connect(task.enable_start)
 			task.delete.connect(self.delete_task)
 			task.error_delete.connect(self.error_on_delete_task)
 			task.request_captcha.connect(self.request_captcha)
 			task.poll_response.connect(self.poll_response)
-			# task.poll_token.connect(self.get_token_from_queue)
 			task.request_abort.connect(self.request_abort)
 			task.update_proxy_label.connect(self.update_proxy)
 			task.load_browser.connect(self.load_task_browser)
-			task.update_status.connect(self.update_task_status)
-			task.update_delay.connect(self.update_delay)
 			task.update_title.connect(self.update_task_title)
-			# task.update_title.connect(self.update_title)
-			# task.update_proxy.connect(self.update_proxy)
-			# task.product_updated.connect(self.update_product)
-			# task.update_image.connect(self.update_image)
-			# task.update_size.connect(self.update_size)
-			task.send_cookies.connect(self.set_cookies)
-			# task.send_url.connect(self.render_js)
-			if update:
-				self.update_task(task, row)
+			task.update_image.connect(self.update_task_image)
+			task.update_size.connect(self.update_task_size)
+			task.update_proxy.connect(self.update_task_proxy)
+			# task.update_delay.connect(self.update_task_delay)
+			task.update_status.connect(self.update_task_status)
+			task.update_run.connect(self.update_task_run)
+
+			if task.task_id in self.tasks.keys():
+				row = self.ui.table_widget_tasks.row(self.tasks[task.task_id].widget_task_id)
 			else:
-				self.add_task(task)
-			self.tasks[a] = task
+				row = self.ui.table_widget_tasks.rowCount()
+				self.ui.table_widget_tasks.insertRow(row)
 
-	def add_task(self, task):
-		row = self.ui.table_widget_tasks.rowCount()
-		self.ui.table_widget_tasks.insertRow(row)
-		self.ui.table_widget_tasks.setItem(row, 0, task.widget_task_id)
-		self.ui.table_widget_tasks.setItem(row, 1, task.widget_task_type)
-		self.ui.table_widget_tasks.setItem(row, 2, task.widget_task_name)
-		# self.ui.table_widget_tasks.setCellWidget(row, 2, task.widget_task_name)
-		self.ui.table_widget_tasks.setItem(row, 3, task.widget_profile)
-		self.ui.table_widget_tasks.setItem(row, 4, task.widget_product)
-		self.ui.table_widget_tasks.setCellWidget(row, 5, task.widget_image)
-		self.ui.table_widget_tasks.setItem(row, 6, task.widget_size)
-		self.ui.table_widget_tasks.setItem(row, 7, task.widget_proxy)
-		self.ui.table_widget_tasks.setItem(row, 8, task.widget_status)
-		self.ui.table_widget_tasks.setItem(row, 9, task.widget_delay)
-		self.ui.table_widget_tasks.setCellWidget(row, 10, task.actions)
-		# self.ui.table_widget_tasks.resizeColumnsToContents()
-		self.ui.table_widget_tasks.resizeColumnToContents(10)
+			self.ui.table_widget_tasks.setItem(row, 0, task.widget_task_id)
+			self.ui.table_widget_tasks.setCellWidget(row, 1, task.widget_task_type)
+			self.ui.table_widget_tasks.setCellWidget(row, 2, task.widget_name_store)
+			self.ui.table_widget_tasks.setCellWidget(row, 3, task.widget_profile)
+			self.ui.table_widget_tasks.setCellWidget(row, 4, task.widget_product)
+			self.ui.table_widget_tasks.setCellWidget(row, 5, task.widget_image)
+			self.ui.table_widget_tasks.setCellWidget(row, 6, task.widget_proxy)
+			self.ui.table_widget_tasks.setCellWidget(row, 7, task.widget_status)
+			self.ui.table_widget_tasks.setCellWidget(row, 8, task.widget_action)
+			self.ui.table_widget_tasks.resizeColumnToContents(8)
 
-	def update_task(self, task, row):
-		# get row of current modified task
-		# row = self.ui.table_widget_tasks.row(old.widget_task_id)
-		self.ui.table_widget_tasks.setItem(row, 0, task.widget_task_id)
-		self.ui.table_widget_tasks.setItem(row, 1, task.widget_task_type)
-		self.ui.table_widget_tasks.setItem(row, 2, task.widget_task_name)
-		# self.ui.table_widget_tasks.setCellWidget(row, 2, task.widget_task_name)
-		self.ui.table_widget_tasks.setItem(row, 3, task.widget_profile)
-		self.ui.table_widget_tasks.setItem(row, 4, task.widget_product)
-		self.ui.table_widget_tasks.setCellWidget(row, 5, task.widget_image)
-		self.ui.table_widget_tasks.setItem(row, 6, task.widget_size)
-		self.ui.table_widget_tasks.setItem(row, 7, task.widget_proxy)
-		self.ui.table_widget_tasks.setItem(row, 8, task.widget_status)
-		self.ui.table_widget_tasks.setItem(row, 9, task.widget_delay)
-		self.ui.table_widget_tasks.setCellWidget(row, 10, task.actions)
-		# self.ui.table_widget_tasks.viewport().update()
+			self.tasks[task.task_id] = task
+
+	def load_task_info(self, task_id):
+		task = self.tasks[task_id]
+		# self.ui.combo_box_task_type.setCurrentIndex(self.ui.combo_box_task_type.findText(str(task.task_type)))
+		self.ui.combo_box_store.setCurrentIndex(self.ui.combo_box_store.findText(task.store_name))
+
+		# Set after store is set
+		self.ui.combo_box_task_type.setCurrentIndex(self.ui.combo_box_task_type.findText(task.task_type))
+		# self.ui.combo_box_search_type.setCurrentIndex(self.ui.combo_box_search_type.findText(task.search_type))
+		self.ui.line_edit_search.setText(task.search)
+		self.ui.line_edit_task_name.setText(task.task_name)
+		self.ui.line_edit_task_qty.setText('1')
+		self.ui.combo_box_qty.setCurrentIndex(self.ui.combo_box_qty.findText(str(task.qty)))
+		self.ui.check_box_account.setChecked(True if task.check_box_account else False)
+		if task.account:
+			self.ui.combo_box_accounts.setCurrentIndex(self.ui.combo_box_accounts.findData(task.account.account_id))
+		self.ui.combo_box_profile.setCurrentIndex(self.ui.combo_box_profile.findData(task.profile.profile_id))
+		self.ui.combo_box_billing.setCurrentIndex(self.ui.combo_box_billing.findData(task.billing.billing_id))
+		self.ui.check_box_proxies.setChecked(True if task.check_box_proxies == 2 else False)
+		if task.proxies:
+			self.ui.combo_box_proxies.setCurrentIndex(self.ui.combo_box_proxies.findData(task.proxies.proxy_id))
+		self.ui.combo_box_rotation.setCurrentIndex(self.ui.combo_box_rotation.findText(task.rotation))
+		self.ui.check_box_size.setChecked(True if task.check_box_size == 2 else False)
+		if self.ui.check_box_size.isChecked():
+			self.ui.combo_box_size.setCurrentIndex(self.ui.combo_box_size.findText(task.size))
+		self.ui.check_box_color.setChecked(True if task.check_box_color == 2 else False)
+		if self.ui.check_box_color.isChecked():
+			self.ui.line_edit_color.setText(task.color)
+		self.ui.check_box_category.setChecked(True if task.check_box_category == 2 else False)
+		if self.ui.check_box_category.isChecked():
+			self.ui.combo_box_category.setCurrentIndex(self.ui.combo_box_category.findText(task.category))
+		self.ui.check_box_price_range.setChecked(True if task.check_box_price_range == 2 else False)
+		if self.ui.check_box_price_range.isChecked():
+			self.ui.line_edit_price_min.setText(task.price_min)
+			self.ui.line_edit_price_max.setText(task.price_max)
+		self.ui.line_edit_delay_min.setText(task.delay_min)
+		self.ui.line_edit_delay_max.setText(task.delay_max)
+		self.ui.check_box_captcha.setChecked(True if task.check_box_captcha == 2 else False)
+
+	def new_task(self):
+		self.ui.combo_box_task_type.setCurrentIndex(-1)
+		self.ui.combo_box_store.setCurrentIndex(-1)
+		self.ui.combo_box_search_type.setCurrentIndex(-1)
+		self.ui.line_edit_search.clear()
+		self.ui.line_edit_task_name.clear()
+		self.ui.line_edit_task_qty.setText(f'1')
+		self.ui.combo_box_qty.setCurrentIndex(0)
+		self.ui.combo_box_account.setCurrentIndex(-1)
+		self.ui.combo_box_profile.setCurrentIndex(-1)
+		self.ui.combo_box_billing.setCurrentIndex(-1)
+		self.ui.check_box_proxies.setChecked(False)
+		self.ui.combo_box_rotation.setCurrentIndex(0)
+		self.ui.check_box_size.setChecked(False)
+		self.ui.check_box_color.setChecked(False)
+		self.ui.check_box_category.setChecked(False)
+		self.ui.check_box_price_range.setChecked(False)
+		self.ui.line_edit_delay_min.clear()
+		self.ui.line_edit_delay_max.clear()
+		self.ui.check_box_captcha.setChecked(False)
+		# self.ui.table_widget_tasks.clearSelection()
+		self.ui.table_widget_tasks.clearSelection()
 
 	# def update_title(self, title):
 	# 	self.ui.table_widget_tasks.setItem(row, 8, task.widget_status)
@@ -1833,155 +1721,107 @@ class GUI(QtWidgets.QMainWindow):
 		# self.view.load(QtCore.QUrl(url))
 		# self.view.show()
 
-	def load_task_info(self, task):
-		if self.ui.table_widget_tasks.selectionModel().hasSelection():
-			# print(self.ui.table_widget_tasks.selectedIndexes()[0].data(QtCore.Qt.UserRole))
-			# task = self.tasks[task_id]
-			self.ui.line_edit_task_name.setText(str(task.task_name))
-			self.ui.line_edit_task_qty.setText('1')
-			self.ui.combo_box_task_type.setCurrentIndex(self.ui.combo_box_task_type.findText(task.task_type))
-			self.ui.combo_box_store.setCurrentIndex(self.ui.combo_box_store.findText(task.store_name))
-			self.ui.combo_box_qty.setCurrentIndex(self.ui.combo_box_qty.findText(str(task.qty)))
-			self.ui.check_box_captcha.setCheckState(task.check_box_captcha)
-			self.ui.combo_box_search_type.setCurrentIndex(self.ui.combo_box_search_type.findText(task.search_type))
-			self.ui.line_edit_search.setText(str(task.search))
-			self.ui.check_box_account.setCheckState(task.check_box_account)
-			if task.account.account_id:
-				self.ui.combo_box_accounts.setCurrentIndex(self.ui.combo_box_accounts.findData(task.account.account_id))
-			self.ui.combo_box_profiles.setCurrentIndex(self.ui.combo_box_profiles.findData(task.profile.profile_id))
-			self.ui.combo_box_billing.setCurrentIndex(self.ui.combo_box_billing.findData(task.billing.billing_id))
-			self.ui.check_box_proxies.setCheckState(task.check_box_proxies)
-			if task.proxy_profile.proxy_id:
-				self.ui.combo_box_proxies.setCurrentIndex(self.ui.combo_box_proxies.findData(task.proxy_profile.proxy_id))
-			self.ui.combo_box_rotation.setCurrentIndex(self.ui.combo_box_rotation.findText(task.rotation))
-			self.ui.check_box_category.setCheckState(task.check_box_category)
-			if self.ui.check_box_category.checkState() == QtCore.Qt.Checked:
-				self.ui.combo_box_category.setCurrentIndex(self.ui.combo_box_category.findText(task.category))
-			self.ui.check_box_size.setCheckState(task.check_box_size)
-			if self.ui.check_box_size.checkState() == QtCore.Qt.Checked:
-				self.ui.combo_box_size.setCurrentIndex(self.ui.combo_box_size.findText(task.size))
-			self.ui.check_box_color.setCheckState(task.check_box_color)
-			if self.ui.check_box_color.checkState() == QtCore.Qt.Checked:
-				self.ui.line_edit_color.setText(str(task.color))
-			self.ui.line_edit_retry_delay.setText(str(task.retry_delay))
-			self.ui.check_box_retry_variance.setCheckState(task.check_box_retry_var)
-			if self.ui.check_box_retry_variance.checkState() == QtCore.Qt.Checked:
-				self.ui.line_edit_retry_variance.setText(str(task.retry_var))
-			self.ui.check_box_checkout_delay.setCheckState(task.check_box_checkout_delay)
-			if self.ui.check_box_checkout_delay.checkState() == QtCore.Qt.Checked:
-				self.ui.line_edit_checkout_delay.setText(str(task.checkout_delay))
-			self.ui.check_box_checkout_variance.setCheckState(task.check_box_checkout_var)
-			if self.ui.check_box_checkout_variance.checkState() == QtCore.Qt.Checked:
-				self.ui.line_edit_checkout_variance.setText(str(task.checkout_var))
-
-	def new_task(self):
-		# self.ui.table_widget_tasks.clearSelection()
-		# self.ui.table_widget_tasks.selectionModel().clear()
-		# self.task_ids = []
-		self.toggle_delete_task(False)
-		self.disable_mass_edit()
-		self.clear_task_fields()
-		self.ui.table_widget_tasks.selectionModel().clearSelection()
-		self.task_ids = []
-
-	def clear_task_fields(self):
-		self.ui.combo_box_task_type.setCurrentIndex(0)
-		self.ui.combo_box_store.setCurrentIndex(-1)
-		self.ui.combo_box_search_type.setCurrentIndex(0)
-		self.ui.line_edit_search.clear()
-		self.ui.line_edit_task_name.clear()
-		self.ui.line_edit_task_qty.setText('1')
-		self.ui.check_box_account.setChecked(False)
-		self.ui.combo_box_profiles.setCurrentIndex(-1)
-		self.ui.combo_box_billing.setCurrentIndex(-1)
-		self.ui.combo_box_accounts.setCurrentIndex(-1)
-		self.ui.check_box_proxies.setChecked(False)
-		self.toggle_proxies()
-		self.ui.combo_box_rotation.setCurrentIndex(0)
-		self.ui.check_box_category.setChecked(False)
-		self.ui.check_box_size.setChecked(False)
-		self.ui.check_box_color.setChecked(False)
-		self.ui.check_box_captcha.setCheckState(QtCore.Qt.Unchecked)
-		self.ui.combo_box_qty.setCurrentIndex(0)
-		self.ui.line_edit_retry_delay.clear()
-		self.ui.check_box_retry_variance.setChecked(False)
-		self.ui.check_box_checkout_delay.setChecked(False)
-		self.ui.check_box_checkout_variance.setChecked(False)
-
 	def save_task(self):
-		items = {
-			'line_edit_task_name': self.ui.line_edit_task_name.text(),
-			'combo_box_task_type': self.ui.combo_box_task_type.currentText(),
-			'combo_box_store': self.ui.combo_box_store.currentText(),
-			'combo_box_qty': self.ui.combo_box_qty.currentText(),
-			'check_box_captcha': self.ui.check_box_captcha.checkState(),
-			'combo_box_search_type': self.ui.combo_box_search_type.currentText(),
-			'line_edit_search': self.ui.line_edit_search.text(),
-			'check_box_account': self.ui.check_box_account.checkState(),
-			'combo_box_accounts': self.ui.combo_box_accounts.currentData(QtCore.Qt.UserRole),
-			'combo_box_profiles': self.ui.combo_box_profiles.currentData(QtCore.Qt.UserRole),
-			'combo_box_billing': self.ui.combo_box_billing.currentData(QtCore.Qt.UserRole),
-			'check_box_proxies': self.ui.check_box_proxies.checkState(),
-			'combo_box_proxies': self.ui.combo_box_proxies.currentData(QtCore.Qt.UserRole),
-			'combo_box_rotation': self.ui.combo_box_rotation.currentText(),
-			'check_box_category': self.ui.check_box_category.checkState(),
-			'combo_box_category': self.ui.combo_box_category.currentText(),
-			'check_box_size': self.ui.check_box_size.checkState(),
-			'combo_box_size': self.ui.combo_box_size.currentText(),
-			'check_box_color': self.ui.check_box_color.checkState(),
-			'line_edit_color': self.ui.line_edit_color.text(),
-			'line_edit_retry_delay': self.ui.line_edit_retry_delay.text(),
-			'check_box_retry_variance': self.ui.check_box_retry_variance.checkState(),
-			'line_edit_retry_variance': self.ui.line_edit_retry_variance.text(),
-			'check_box_checkout_delay': self.ui.check_box_checkout_delay.checkState(),
-			'line_edit_checkout_delay': self.ui.line_edit_checkout_delay.text(),
-			'check_box_checkout_variance': self.ui.check_box_checkout_variance.checkState(),
-			'line_edit_checkout_variance': self.ui.line_edit_checkout_variance.text(),
-			'base_url': self.shopify['base_url'],
-			'api_key': self.shopify['api_key']
-		}
-		tasks = len(self.task_ids)
-		task_qty = int(self.ui.line_edit_task_qty.text())
-		if tasks < 1:
-			# Create new task
-			base_name = items['line_edit_task_name']
-			i = 0
-			while i < task_qty:
-				if i > 0:
-					items['line_edit_task_name'] = f'{base_name} ({i})'
-				self.tgadb.save_task(items)
-				data = self.tgadb.get_recent_task()
-				self.create_task(data)
-				i += 1
-			self.new_task()
-		elif tasks == 1:
-			# Update a task
-			base_name = items['line_edit_task_name']
-			i = 0
-			while i < task_qty:
-				if i > 0:
-					items['line_edit_task_name'] = f'{base_name} ({i})'
+		try:
+			# Limit to numbers only and 2 digits using regex
+			task_qty = int(self.ui.line_edit_task_qty.text())
+			items = {
+				'combo_box_task_type': self.ui.combo_box_task_type.currentText(),
+				'combo_box_store': self.ui.combo_box_store.currentText(),
+				'line_edit_custom_shopify': '',
+				'combo_box_search_type': self.ui.combo_box_search_type.currentText(),
+				'line_edit_search': self.ui.line_edit_search.text(),
+				'line_edit_task_name': self.ui.line_edit_task_name.text(),
+				'combo_box_qty': self.ui.combo_box_qty.currentText(),
+				'check_box_account': self.ui.check_box_account.checkState(),
+				'combo_box_account': self.ui.combo_box_account.currentData(QtCore.Qt.UserRole),
+				'combo_box_profile': self.ui.combo_box_profile.currentData(QtCore.Qt.UserRole),
+				'combo_box_billing': self.ui.combo_box_billing.currentData(QtCore.Qt.UserRole),
+				'check_box_proxies': self.ui.check_box_proxies.checkState(),
+				'combo_box_proxies': self.ui.combo_box_proxies.currentData(QtCore.Qt.UserRole),
+				'combo_box_rotation': self.ui.combo_box_rotation.currentText(),
+				'check_box_size': self.ui.check_box_size.checkState(),
+				'combo_box_size': self.ui.combo_box_size.currentText(),
+				'check_box_color': self.ui.check_box_color.checkState(),
+				'line_edit_color': self.ui.line_edit_color.text(),
+				'check_box_category': self.ui.check_box_category.checkState(),
+				'combo_box_category': self.ui.combo_box_category.currentText(),
+				'check_box_price_range': self.ui.check_box_price_range.checkState(),
+				'line_edit_price_min': self.ui.line_edit_price_min.text(),
+				'line_edit_price_max': self.ui.line_edit_price_max.text(),
+				'line_edit_delay_min': self.ui.line_edit_delay_min.text(),
+				'line_edit_delay_max': self.ui.line_edit_delay_max.text(),
+				'check_box_captcha': self.ui.check_box_captcha.checkState()
+			}
+			task_name = items['line_edit_task_name']
+			# Will only loop once for mass edit
+			for i in range(0, task_qty):
+				if self.task_ids:
+					# Task(s) selected, update task(s)
+					# for task_id in self.task_ids:
+
+					# task_id = self.task_ids[0]
+					# self.tgadb.save_task(items, task_id)
+					pass
+				else:
+					# No task(s) selected, create new task
 					self.tgadb.save_task(items)
-					data = self.tgadb.get_recent_task()
-					self.create_task(data)
-				task_id = self.task_ids[0]
-				self.tgadb.save_task(items, task_id)
-				data = self.tgadb.get_task(task_id)
-				self.create_task(data, task_id=task_id, update=True)
-				i += 1
+					items['line_edit_task_name'] = f'{task_name} ({i + 1})'
+
+				self.create_task(self.tgadb.get_recent_task())
+
+			# Clear
 			self.new_task()
-		else:
-			# Mass edit
-			fields = self.check_mass_edit_fields()
-			if fields:
-				for task_id in self.task_ids:
-					for key, value in fields.items():
-						self.tgadb.update_task(key, value, task_id)
-					data = self.tgadb.get_task(task_id)
-					self.create_task(data, task_id=task_id, update=True)
-				self.new_task()
-			else:
-				self.confirmation_dialog('Error', 'One or more fields are empty.')
+		except Exception as e:
+			print(f'{e}')
+			self.confirmation_dialog('Error', 'Something went wrong.')
+
+			
+
+
+
+		# tasks = len(self.task_ids)
+		# task_qty = int(self.ui.line_edit_task_qty.text())
+		# if tasks < 1:
+		# 	# Create new task
+		# 	base_name = items['line_edit_task_name']
+		# 	i = 0
+		# 	while i < task_qty:
+		# 		if i > 0:
+		# 			items['line_edit_task_name'] = f'{base_name} ({i})'
+		# 		self.tgadb.save_task(items)
+		# 		data = self.tgadb.get_recent_task()
+		# 		self.create_task(data)
+		# 		i += 1
+		# 	self.new_task()
+		# elif tasks == 1:
+		# 	# Update a task
+		# 	base_name = items['line_edit_task_name']
+		# 	i = 0
+		# 	while i < task_qty:
+		# 		if i > 0:
+		# 			items['line_edit_task_name'] = f'{base_name} ({i})'
+		# 			self.tgadb.save_task(items)
+		# 			data = self.tgadb.get_recent_task()
+		# 			self.create_task(data)
+		# 		task_id = self.task_ids[0]
+		# 		self.tgadb.save_task(items, task_id)
+		# 		data = self.tgadb.get_task(task_id)
+		# 		self.create_task(data, task_id=task_id, update=True)
+		# 		i += 1
+		# 	self.new_task()
+		# else:
+		# 	# Mass edit
+		# 	fields = self.check_mass_edit_fields()
+		# 	if fields:
+		# 		for task_id in self.task_ids:
+		# 			for key, value in fields.items():
+		# 				self.tgadb.update_task(key, value, task_id)
+		# 			data = self.tgadb.get_task(task_id)
+		# 			self.create_task(data, task_id=task_id, update=True)
+		# 		self.new_task()
+		# 	else:
+		# 		self.confirmation_dialog('Error', 'One or more fields are empty.')
 
 	def delete_task(self, task_id, task_name):
 		if self.confirmation_dialog('Confirm', 'Delete task [{}]?'.format(task_name)):
@@ -1996,33 +1836,65 @@ class GUI(QtWidgets.QMainWindow):
 	def enable_mass_edit(self):
 		for cb in self.cbe_items:
 			cb.setChecked(False)
-			cb.setEnabled(True)
+			# cb.setEnabled(True)
 			cb.show()
+		# for cb in self.mass_edit_items:
+		# 	cb[0].setChecked(False)
+		# 	cb[0].setEnabled(True)
+		# 	cb[0].show()
+
+		self.ui.label_tasks.setEnabled(False)
+		self.ui.line_edit_task_qty.setEnabled(False)
+		self.ui.line_edit_task_qty.clear()
+
+		self.ui.combo_box_task_type.setCurrentIndex(-1)
+		self.ui.combo_box_store.setCurrentIndex(-1)
+		self.ui.combo_box_search_type.setCurrentIndex(-1)
+		self.ui.line_edit_search.clear()
+		self.ui.line_edit_task_name.clear()
+		self.ui.combo_box_qty.setCurrentIndex(-1)
+		self.ui.combo_box_account.setCurrentIndex(-1)
+		self.ui.combo_box_profile.setCurrentIndex(-1)
+		self.ui.combo_box_billing.setCurrentIndex(-1)
+		self.ui.combo_box_proxies.setCurrentIndex(-1)
+		self.ui.combo_box_rotation.setCurrentIndex(-1)
+		self.ui.combo_box_size.setCurrentIndex(-1)
+		self.ui.line_edit_color.clear()
+		self.ui.combo_box_category.setCurrentIndex(-1)
+		self.ui.line_edit_price_min.clear()
+		self.ui.line_edit_price_max.clear()
+		self.ui.line_edit_delay_min.clear()
+		self.ui.line_edit_delay_max.clear()
+
 
 	def disable_mass_edit(self):
 		for cb in self.cbe_items:
 			cb.setChecked(True)
-			self.toggle_row_task_type()
-			cb.setEnabled(False)
+			# cb.setEnabled(False)
 			cb.hide()
+		# for cb in self.mass_edit_items:
+		# 	cb[0].setChecked(True)
+		# 	cb[0].setEnabled(False)
+		# 	cb[0].hide()
+
+		self.ui.label_tasks.setEnabled(True)
+		self.ui.line_edit_task_qty.setEnabled(True)
+		self.ui.line_edit_task_qty.setText('1')
 
 	def load_combo_box_profiles(self):
-		self.ui.combo_box_profiles.clear()
-		data = self.tgadb.get_all_profiles()
-		for a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q in data:
-			self.ui.combo_box_profiles.addItem(b, a)
+		self.ui.combo_box_profile.clear()
+		for key, value in self.profiles.items():
+			self.ui.combo_box_profile.addItem(value.profile_name, value.profile_id)
 
 	def load_combo_box_billing(self):
 		self.ui.combo_box_billing.clear()
-		data = self.tgadb.get_all_billing()
-		for a, b, c, d, e, f, g, h in data:
-			self.ui.combo_box_billing.addItem(b, a)
+		for key, value in self.billing.items():
+			self.ui.combo_box_billing.addItem(value.billing_name, value.billing_id)
 
 	def load_combo_box_proxies(self):
 		self.ui.combo_box_proxies.clear()
-		data = self.tgadb.get_all_proxies()
-		for a, b, c in data:
-			self.ui.combo_box_proxies.addItem(b, a)
+		for key, value in self.proxies.items():
+			self.ui.combo_box_proxies.addItem(value.proxy_name, value.proxy_id)
 
 	def load_combo_box_categories(self):
 		self.ui.combo_box_category.clear()
@@ -2070,107 +1942,131 @@ class GUI(QtWidgets.QMainWindow):
 		self.ui.combo_box_size.addItem('13.5', 25)
 		self.ui.combo_box_size.addItem('14', 26)
 
-	#--------------------Tab Widget Profile Functions--------------------
+#================================================================================
+# PROFILE PAGE
+#================================================================================
 
 	def load_profile_list(self):
-		data = self.tgadb.get_all_profiles()
-		for a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q in data:
-			item = QtWidgets.QListWidgetItem(b)
-			item.setData(QtCore.Qt.UserRole, a)
-			self.ui.list_widget_profiles.addItem(item)
+		self.create_profile(self.tgadb.get_all_profiles())
 
 	def load_profile_info(self, profile_id):
-		data = self.tgadb.get_profile(profile_id)
-		for a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q in data:
-			self.ui.line_edit_profile_name.setText(b)
-			self.ui.line_edit_first_name.setText(c)
-			self.ui.line_edit_last_name.setText(d)
-			self.ui.line_edit_email.setText(e)
-			self.ui.line_edit_phone.setText(f)
-			self.ui.check_box_same_as_shipping.setCheckState(g)
-			self.ui.line_edit_shipping_address.setText(h)
-			self.ui.line_edit_shipping_address_2.setText(i)
-			self.ui.line_edit_shipping_city.setText(j)
-			self.ui.combo_box_shipping_state.setCurrentIndex(self.ui.combo_box_shipping_state.findText(k))
-			self.ui.line_edit_shipping_zip.setText(l)
-			self.ui.line_edit_billing_address.setText(m)
-			self.ui.line_edit_billing_address_2.setText(n)
-			self.ui.line_edit_billing_city.setText(o)
-			self.ui.combo_box_billing_state.setCurrentIndex(self.ui.combo_box_billing_state.findText(p))
-			self.ui.line_edit_billing_zip.setText(q)
+		profile = self.profiles[profile_id]
+		self.ui.line_edit_profile_name.setText(profile.profile_name)
+		self.ui.check_box_email_jig.setCheckState(profile.check_box_email_jig)
+		self.ui.line_edit_email.setText(profile.email)
+		self.ui.line_edit_phone.setText(profile.phone)
+		self.ui.line_edit_s_first_name.setText(profile.s_first_name)
+		self.ui.line_edit_s_last_name.setText(profile.s_last_name)
+		self.ui.line_edit_s_address_1.setText(profile.s_address_1)
+		self.ui.line_edit_s_address_2.setText(profile.s_address_2)
+		self.ui.line_edit_s_city.setText(profile.s_city)
+		self.ui.combo_box_s_state.setCurrentIndex(self.ui.combo_box_s_state.findText(profile.s_state))
+		self.ui.line_edit_s_zip.setText(profile.s_zip)
+		self.ui.gb_billing.setChecked(True if profile.group_box_same_as_shipping == 2 else False)
+		# self.ui.gb_billing.setCheckState(profile.group_box_same_as_shipping)
+		self.ui.line_edit_b_first_name.setText(profile.b_first_name)
+		self.ui.line_edit_b_last_name.setText(profile.b_last_name)
+		self.ui.line_edit_b_address_1.setText(profile.b_address_1)
+		self.ui.line_edit_b_address_2.setText(profile.b_address_2)
+		self.ui.line_edit_b_city.setText(profile.b_city)
+		self.ui.combo_box_b_state.setCurrentIndex(self.ui.combo_box_b_state.findText(profile.b_state))
+		self.ui.line_edit_b_zip.setText(profile.b_zip)
 
 	def new_profile(self):
-		for item in self.profile_items:
-			if type(item) is QtWidgets.QLineEdit:
-				item.clear()
-			elif type(item) is QtWidgets.QComboBox:
-				item.setCurrentIndex(0)
-			elif type(item) is QtWidgets.QCheckBox:
-				item.setChecked(True)
+		self.ui.line_edit_profile_name.clear()
+		self.ui.check_box_email_jig.setCheckState(QtCore.Qt.Checked)
+		self.ui.line_edit_email.clear()
+		self.ui.line_edit_phone.clear()
+		self.ui.line_edit_s_first_name.clear()
+		self.ui.line_edit_s_last_name.clear()
+		self.ui.line_edit_s_address_1.clear()
+		self.ui.line_edit_s_address_2.clear()
+		self.ui.line_edit_s_city.clear()
+		self.ui.combo_box_s_state.setCurrentIndex(0)
+		self.ui.line_edit_s_zip.clear()
+		self.ui.gb_billing.setChecked(True)
+		self.ui.line_edit_b_first_name.clear()
+		self.ui.line_edit_b_last_name.clear()
+		self.ui.line_edit_b_address_1.clear()
+		self.ui.line_edit_b_address_2.clear()
+		self.ui.line_edit_b_city.clear()
+		self.ui.combo_box_b_state.setCurrentIndex(0)
+		self.ui.line_edit_b_zip.clear()
 		self.ui.list_widget_profiles.clearSelection()
-		self.ui.list_widget_profiles.selectionModel().clear()
+
+	def create_profile(self, profile_data):
+		for a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t in profile_data:
+			profile = Profile(
+				profile_id=a,
+				profile_name=b,
+				check_box_email_jig=c,
+				email=d,
+				phone=e,
+				s_first_name=f,
+				s_last_name=g,
+				s_address_1=h,
+				s_address_2=i,
+				s_city=j,
+				s_state=k,
+				s_zip=l,
+				group_box_same_as_shipping=m,
+				b_first_name=n,
+				b_last_name=o,
+				b_address_1=p,
+				b_address_2=q,
+				b_city=r,
+				b_state=s,
+				b_zip=t
+			)
+			item = QtWidgets.QListWidgetItem(profile.profile_name)
+			item.setData(QtCore.Qt.UserRole, profile.profile_id)
+			self.ui.list_widget_profiles.addItem(item)
+			self.ui.combo_box_profile.addItem(profile.profile_name, profile.profile_id)
+			self.profiles[profile.profile_id] = profile
 
 	def save_profile(self):
 		item = self.ui.list_widget_profiles.currentItem()
 		items = {
 			'profile_name': self.ui.line_edit_profile_name.text(),
-			'first_name': self.ui.line_edit_first_name.text(),
-			'last_name': self.ui.line_edit_last_name.text(),
+			'check_box_email_jig': self.ui.check_box_email_jig.checkState(),
 			'email': self.ui.line_edit_email.text(),
 			'phone': self.ui.line_edit_phone.text(),
-			'same_as_shipping': self.ui.check_box_same_as_shipping.checkState(),
-			'shipping_address': self.ui.line_edit_shipping_address.text(),
-			'shipping_address_2': self.ui.line_edit_shipping_address_2.text(),
-			'shipping_city': self.ui.line_edit_shipping_city.text(),
-			'shipping_state': self.ui.combo_box_shipping_state.currentText(),
-			'shipping_zip': self.ui.line_edit_shipping_zip.text(),
-			'billing_address': self.ui.line_edit_billing_address.text(),
-			'billing_address_2': self.ui.line_edit_billing_address_2.text(),
-			'billing_city': self.ui.line_edit_billing_city.text(),
-			'billing_state': self.ui.combo_box_billing_state.currentText(),
-			'billing_zip': self.ui.line_edit_billing_zip.text()
+			's_first_name': self.ui.line_edit_s_first_name.text(),
+			's_last_name': self.ui.line_edit_s_last_name.text(),
+			's_address_1': self.ui.line_edit_s_address_1.text(),
+			's_address_2': self.ui.line_edit_s_address_2.text(),
+			's_city': self.ui.line_edit_s_city.text(),
+			's_state': self.ui.combo_box_s_state.currentText(),
+			's_zip': self.ui.line_edit_s_zip.text(),
+			'group_box_same_as_shipping': 2 if self.ui.gb_billing.isChecked() else 0,
+			'b_first_name': self.ui.line_edit_b_first_name.text(),
+			'b_last_name': self.ui.line_edit_b_last_name.text(),
+			'b_address_1': self.ui.line_edit_b_address_1.text(),
+			'b_address_2': self.ui.line_edit_b_address_2.text(),
+			'b_city': self.ui.line_edit_b_city.text(),
+			'b_state': self.ui.combo_box_b_state.currentText(),
+			'b_zip': self.ui.line_edit_b_zip.text()
 		}
-		if self.validate_fields(self.profile_items):
-			try:
-				if item:
-					self.tgadb.save_profile(items, item.data(QtCore.Qt.UserRole))
-				else:
-					self.tgadb.save_profile(items)
-			except Exception as e:
-				self.post_to_log('Error saving profile [{}]'.format(str(e)))
-			else:
-				self.post_to_log('Profile [{}] saved successfully'.format(items['profile_name']))
-				self.new_profile()
-				# update list widget profiles (addItem)
-				self.ui.list_widget_profiles.clear()
-				self.ui.list_widget_profiles.clearSelection()
-				self.ui.list_widget_profiles.selectionModel().clear()
-				self.load_profile_list()
-				# update combo box profile
-				self.load_combo_box_profiles()
-		else:
-			self.post_to_log('One or more fields are empty')
+		self.tgadb.save_profile(items)
+		self.create_profile(self.tgadb.get_recent_profile())
+		self.new_profile()
 
-	def delete_profile(self, profile_id):
-		# delete from database
-		try:
-			profile_name = self.ui.list_widget_profiles.currentItem().text()
-			self.tgadb.delete_profile(profile_id)
-		except Exception as e:
-			self.post_to_log('Error deleting profile [{}]'.format(str(e)))
-		else:
-			# clear fields
-			self.new_profile()
-			# update list widget profiles
-			self.ui.list_widget_profiles.clear()
-			self.load_profile_list()
-			# clear selections
-			self.ui.list_widget_profiles.clearSelection()
-			self.ui.list_widget_profiles.selectionModel().clear()
-			# post to log
-			self.post_to_log('Deleted profile [{}] successfully'.format(profile_name))
-			# update combo box billing profile
-			self.load_combo_box_billing()
+	def delete_profile(self, profile_item):
+		# Grab ID and ROW from billing item
+		if self.confirmation_dialog('Please Confirm', f'Are you sure you want to delete [{profile_item.text()}]'):
+			# delete from database
+			try:
+				profile_id = profile_item.data(QtCore.Qt.UserRole)
+				row = self.ui.list_widget_profiles.row(profile_item)
+				self.ui.list_widget_profiles.takeItem(row)
+				self.tgadb.delete_profile(profile_id)
+				self.new_profile()
+				self.profiles.pop(profile_id)
+				self.ui.combo_box_profile.removeItem(self.ui.combo_box_profile.findData(profile_id))
+			except Exception as e:
+				print(f'{e}')
+
+		# self.load_combo_box_profiles()
 
 	def delete_all_profiles(self):
 		# prompt dialog for "are you sure" before deleting
@@ -2208,101 +2104,79 @@ class GUI(QtWidgets.QMainWindow):
 					pair[0].setCurrentIndex(0)
 				pair[0].setEnabled(True)
 
-	# def live_copy_shipping(self, pair):
-	# 	if self.ui.check_box_same_as_shipping.isChecked():
-	# 		pair[0].setText(pair[1].text())
-
-	# def load_combo_box_billing(self):
-	# 	self.ui.combo_box_billing_profile.clear()
-	# 	data = self.tgadb.get_all_billing()
-	# 	for a, b, c, d, e, f, g, h in data:
-	# 		self.ui.combo_box_billing_profile.addItem(b, a)
-
-	#--------------------Tab Widget Billing Functions--------------------
+#================================================================================
+# BILLING PAGE
+#================================================================================
 
 	def load_billing_list(self):
-		data = self.tgadb.get_all_billing()
-		for a, b, c, d, e, f, g, h in data:
-			item = QtWidgets.QListWidgetItem(b)
-			item.setData(QtCore.Qt.UserRole, a)
-			self.ui.list_widget_billing.addItem(item)
+		self.create_billing_profile(self.tgadb.get_all_billing())
 
 	def load_billing_info(self, billing_id):
-		data = self.tgadb.get_billing(billing_id)
-		for a, b, c, d, e, f, g, h in data:
-			self.ui.line_edit_billing_name.setText(b)
-			self.ui.line_edit_name_on_card.setText(c)
-			self.ui.combo_box_card_type.setCurrentIndex(self.ui.combo_box_card_type.findText(d))
-			self.ui.line_edit_card_number.setText(e)
-			self.ui.combo_box_exp_month.setCurrentIndex(self.ui.combo_box_exp_month.findText(f))
-			self.ui.combo_box_exp_year.setCurrentIndex(self.ui.combo_box_exp_year.findText(g))
-			self.ui.line_edit_cvv.setText(h)
+		billing = self.billing[billing_id]
+		self.ui.line_edit_billing_name.setText(billing.billing_name)
+		self.ui.line_edit_card_name.setText(billing.card_name)
+		self.ui.line_edit_card_number.setText(billing.card_number)
+		self.ui.combo_box_card_month.setCurrentIndex(self.ui.combo_box_card_month.findText(billing.card_month))
+		self.ui.combo_box_card_year.setCurrentIndex(self.ui.combo_box_card_year.findText(billing.card_year))
+		self.ui.line_edit_card_cvv.setText(billing.card_cvv)
 
 	def new_billing_profile(self):
-		for item in self.billing_items:
-			if type(item) is QtWidgets.QLineEdit:
-				item.clear()
-			elif type(item) is QtWidgets.QComboBox:
-				item.setCurrentIndex(0)
+		self.ui.line_edit_billing_name.clear()
+		self.ui.line_edit_card_name.clear()
+		self.ui.line_edit_card_number.clear()
+		self.ui.combo_box_card_month.setCurrentIndex(0)
+		self.ui.combo_box_card_year.setCurrentIndex(0)
+		self.ui.line_edit_card_cvv.clear()
+		
 		self.ui.list_widget_billing.clearSelection()
-		self.ui.list_widget_billing.selectionModel().clear()
+		# self.ui.list_widget_billing.selectionModel().clear()
+
+	def create_billing_profile(self, billing_data):
+		for a, b, c, d, e, f, g in billing_data:
+			billing = Billing(
+				billing_id=a,
+				billing_name=b,
+				card_name=c,
+				card_number=d,
+				card_month=e,
+				card_year=f,
+				card_cvv=g
+			)
+			item = QtWidgets.QListWidgetItem(billing.billing_name)
+			item.setData(QtCore.Qt.UserRole, billing.billing_id)
+			self.ui.list_widget_billing.addItem(item)
+			self.ui.combo_box_billing.addItem(billing.billing_name, billing.billing_id)
+			self.billing[billing.billing_id] = billing
 
 	def save_billing_profile(self):
-		item = self.ui.list_widget_billing.currentItem()
+		# item = self.ui.list_widget_billing.currentItem()
 		items = {
 			'billing_name': self.ui.line_edit_billing_name.text(),
-			'name_on_card': self.ui.line_edit_name_on_card.text(),
-			'card_type': self.ui.combo_box_card_type.currentText(),
+			'card_name': self.ui.line_edit_card_name.text(),
 			'card_number': self.ui.line_edit_card_number.text(),
-			'exp_month': self.ui.combo_box_exp_month.currentText(),
-			'exp_year': self.ui.combo_box_exp_year.currentText(),
-			'cvv': self.ui.line_edit_cvv.text()
+			'card_month': self.ui.combo_box_card_month.currentText(),
+			'card_year': self.ui.combo_box_card_year.currentText(),
+			'card_cvv': self.ui.line_edit_card_cvv.text()
 		}
-		# validate items
-		if self.validate_fields(self.billing_items):
-			try:
-				if item:
-					self.tgadb.save_billing(items, item.data(QtCore.Qt.UserRole))
-				else:
-					self.tgadb.save_billing(items)
-			except Exception as e:
-				self.post_to_log('Error saving billing profile [{}]'.format(str(e)))
-			else:
-				if item:
-					self.post_to_log('Billing profile [{}] updated successfully'.format(items['billing_name']))
-				else:
-					self.post_to_log('Billing profile [{}] saved successfully'.format(items['billing_name'])) # post to console/log
-				# clear fields
-				self.new_billing_profile()
-				# update list widget billing (addItem)
-				self.ui.list_widget_billing.clear()
-				self.load_billing_list()
-				self.ui.list_widget_billing.clearSelection()
-				self.ui.list_widget_billing.selectionModel().clear()
-				# update combo box billing profile
-				self.load_combo_box_billing()
-		else:
-			self.post_to_log('One or more fields are empty')
+		self.tgadb.save_billing(items)
+		self.create_billing_profile(self.tgadb.get_recent_billing())
+		self.new_billing_profile()
+		# 	self.post_to_log('One or more fields are empty')
 
-	def delete_billing_profile(self, billing_id):
-		# delete from database
-		try:
-			billing_name = self.ui.list_widget_billing.currentItem().text()
-			self.tgadb.delete_billing(billing_id)
-		except Exception as e:
-			self.post_to_log('Error deleting billing profile [{}]'.format(str(e)))
-		else:
-			# clear fields
-			self.new_billing_profile()
-			self.ui.list_widget_billing.clear()
-			# clear selections
-			self.ui.list_widget_billing.clearSelection()
-			self.ui.list_widget_billing.selectionModel().clear()
-			self.load_billing_list()
-			# post to log
-			self.post_to_log('Deleted billing profile [{}] successfully'.format(billing_name))
-			# update combo box billing profile
-			self.load_combo_box_billing()
+	def delete_billing_profile(self, billing_item):
+		# Grab ID and ROW from billing item
+		if self.confirmation_dialog('Please Confirm', f'Are you sure you want to delete [{billing_item.text()}]'):
+			# delete from database
+			try:
+				billing_id = billing_item.data(QtCore.Qt.UserRole)
+				row = self.ui.list_widget_billing.row(billing_item)
+				self.ui.list_widget_billing.takeItem(row)
+				self.tgadb.delete_billing(billing_id)
+				self.new_billing_profile()
+				self.billing.pop(billing_id)
+				self.ui.combo_box_billing.removeItem(self.ui.combo_box_billing.findData(billing_id))
+			except Exception as e:
+				print(f'{e}')
 
 	def delete_all_billing_profiles(self):
 		# prompt dialog for "are you sure" before deleting
@@ -2323,137 +2197,117 @@ class GUI(QtWidgets.QMainWindow):
 				# update combo box billing profile
 				self.load_combo_box_billing()
 
-	#--------------------Tab Widget Proxies Functions--------------------
+#================================================================================
+# PROXY PAGE
+#================================================================================
 
 	def load_proxy_list(self):
-		data = self.tgadb.get_all_proxies()
-		if data:
-			for a, b, c in data:
-				proxy = Proxy(a, b, c)
-				# print(type(proxy.proxy_id))
-				self.proxies[proxy.proxy_id] = proxy
-				item = QtWidgets.QListWidgetItem(proxy.proxy_name)
-				item.setData(QtCore.Qt.UserRole, proxy.proxy_id)
-				self.ui.list_widget_proxies.addItem(item)
-				# proxy_id = a
-				# proxy_name = b
-				# proxies = c
-				# item = QtWidgets.QListWidgetItem(proxy_name)
-				# item.setData(QtCore.Qt.UserRole, proxy_id)
-				# self.ui.list_widget_proxies.addItem(item)
-		else:
-			print('there is no data')
+		self.create_proxy_profile(self.tgadb.get_all_proxies())
 
 	def load_proxy_info(self, proxy_id):
-		data = self.tgadb.get_proxy(proxy_id)
-		if data:
-			for a, b, c in data:
-				self.proxy = Proxy(a, b, c)
-				# proxy_id = a
-				# proxy_name = b
-				# proxies = c
-			self.ui.line_edit_proxy_name.setText(self.proxy.proxy_name)
-			self.ui.plain_text_edit_proxies.setPlainText(self.proxy.proxies)
+		proxy = self.proxies[proxy_id]
+		self.ui.line_edit_proxy_name.setText(proxy.proxy_name)
+		self.ui.plain_text_edit_proxies.setPlainText(proxy.proxies)
+		# data = self.tgadb.get_proxy(proxy_id)
+		# if data:
+		# 	for a, b, c in data:
+		# 		self.proxy = Proxy(a, b, c)
+		# 		# proxy_id = a
+		# 		# proxy_name = b
+		# 		# proxies = c
+		# 	self.ui.line_edit_proxy_name.setText(self.proxy.proxy_name)
+		# 	self.ui.plain_text_edit_proxies.setPlainText(self.proxy.proxies)
 
-			# clear rows before inserting
-			# self.ui.table_widget_proxies.setRowCount(0)
-			# row = 0
-			# for item in self.proxy.proxies.split('\n'):
-			# 	self.ui.table_widget_proxies.insertRow(self.ui.table_widget_proxies.rowCount())
-			# 	self.ui.table_widget_proxies.setItem(row, 0, QtWidgets.QTableWidgetItem(item))
-			# 	self.ui.table_widget_proxies.setCellWidget(row, 2, self.proxy.button_widgets[row])
-			# 	# print(proxy.buttons[row])
-			# 	row += 1
-		else:
-			print('there is no data')
+		# 	# clear rows before inserting
+		# 	# self.ui.table_widget_proxies.setRowCount(0)
+		# 	# row = 0
+		# 	# for item in self.proxy.proxies.split('\n'):
+		# 	# 	self.ui.table_widget_proxies.insertRow(self.ui.table_widget_proxies.rowCount())
+		# 	# 	self.ui.table_widget_proxies.setItem(row, 0, QtWidgets.QTableWidgetItem(item))
+		# 	# 	self.ui.table_widget_proxies.setCellWidget(row, 2, self.proxy.button_widgets[row])
+		# 	# 	# print(proxy.buttons[row])
+		# 	# 	row += 1
+		# else:
+		# 	print('there is no data')
 
 	def new_proxy_profile(self):
-		for item in self.proxy_items:
-			if type(item) is QtWidgets.QLineEdit:
-				item.clear()
-			elif type(item) is QtWidgets.QComboBox:
-				item.setCurrentIndex(-1)
-			elif type(item) is QtWidgets.QCheckBox:
-				item.setChecked(True)
-			elif type(item) is QtWidgets.QPlainTextEdit:
-				item.clear()
+		self.ui.line_edit_proxy_name.clear()
+		self.ui.plain_text_edit_proxies.clear()
 		self.ui.list_widget_proxies.clearSelection()
-		self.ui.list_widget_proxies.selectionModel().clear()
-		# clear rows
-		self.ui.table_widget_proxies.setRowCount(0)
+
+	def create_proxy_profile(self, proxy_data):
+		for a, b, c in proxy_data:
+			proxy = Proxy(
+				proxy_id=a,
+				proxy_name=b,
+				proxies=c
+			)
+			item = QtWidgets.QListWidgetItem(proxy.proxy_name)
+			item.setData(QtCore.Qt.UserRole, proxy.proxy_id)
+			self.ui.list_widget_proxies.addItem(item)
+			self.ui.combo_box_proxies.addItem(proxy.proxy_name, proxy.proxy_id)
+			self.proxies[proxy.proxy_id] = proxy
 
 	def save_proxy_profile(self):
-		item = self.ui.list_widget_proxies.currentItem()
+		# item = self.ui.list_widget_proxies.currentItem()
 		items = {
 			'proxy_name': self.ui.line_edit_proxy_name.text(),
 			'proxies': self.ui.plain_text_edit_proxies.toPlainText()
 		}
+		self.tgadb.save_proxy(items)
+		self.create_proxy_profile(self.tgadb.get_recent_proxy())
+		self.new_proxy_profile()
 		# validate items
-		if self.validate_fields(self.proxy_items):
-			try:
-				if item:
-					self.tgadb.save_proxy(items, item.data(QtCore.Qt.UserRole))
-				else:
-					self.tgadb.save_proxy(items)
-			except Exception as e:
-				self.post_to_log('Error saving proxy profile [{}]'.format(str(e)))
-			else:
-				if item:
-					self.post_to_log('Proxy profile [{}] updated successfully'.format(items['proxy_name']))
-				else:
-					self.post_to_log('Proxy profile [{}] saved successfully'.format(items['proxy_name'])) # post to console/log
-				# clear fields
-				self.new_proxy_profile()
-				# update list widget proxies (addItem)
-				self.ui.list_widget_proxies.clear()
-				self.ui.list_widget_proxies.clearSelection()
-				self.ui.list_widget_proxies.selectionModel().clear()
-				self.load_proxy_list()
-				# update combo box proxies profile
-				self.load_combo_box_proxies()
-		else:
-			self.post_to_log('One or more fields are empty')
+		# if self.validate_fields(self.proxy_items):
+		# 	try:
+		# 		if item:
+		# 			self.tgadb.save_proxy(items, item.data(QtCore.Qt.UserRole))
+		# 		else:
+		# 			self.tgadb.save_proxy(items)
+		# 	except Exception as e:
+		# 		self.post_to_log('Error saving proxy profile [{}]'.format(str(e)))
+		# 	else:
+		# 		if item:
+		# 			self.post_to_log('Proxy profile [{}] updated successfully'.format(items['proxy_name']))
+		# 		else:
+		# 			self.post_to_log('Proxy profile [{}] saved successfully'.format(items['proxy_name'])) # post to console/log
+		# 		# clear fields
+		# 		self.new_proxy_profile()
+		# 		# update list widget proxies (addItem)
+		# 		self.ui.list_widget_proxies.clear()
+		# 		self.ui.list_widget_proxies.clearSelection()
+		# 		self.ui.list_widget_proxies.selectionModel().clear()
+		# 		self.load_proxy_list()
+		# 		# update combo box proxies profile
+		# 		self.load_combo_box_proxies()
+		# else:
+		# 	self.post_to_log('One or more fields are empty')
 
-	def delete_proxy_profile(self, proxy_id):
-		# delete from database
-		try:
-			proxy_name = self.ui.list_widget_proxies.currentItem().text()
-			self.tgadb.delete_proxy(proxy_id)
-		except Exception as e:
-			self.post_to_log('Error deleting proxy profile [{}]'.format(str(e)))
-		else:
-			# clear fields
-			self.new_proxy_profile()
-			self.ui.list_widget_proxies.clear()
-			# clear selections
-			self.ui.list_widget_proxies.clearSelection()
-			self.ui.list_widget_proxies.selectionModel().clear()
-			self.load_proxy_list()
-			# post to log
-			self.post_to_log('Deleted proxy profile [{}] successfully'.format(proxy_name))
-			# update combo box proxy profile
-			self.load_combo_box_proxies()
+	def delete_proxy_profile(self, proxy_item):
+		# Grab ID and ROW from proxy item
+		if self.confirmation_dialog('Please Confirm', f'Are you sure you want to delete [{proxy_item.text()}]'):
+			# delete from database
+			try:
+				proxy_id = proxy_item.data(QtCore.Qt.UserRole)
+				row = self.ui.list_widget_proxies.row(proxy_item)
+				self.ui.list_widget_proxies.takeItem(row)
+				self.tgadb.delete_proxy(proxy_id)
+				self.new_proxy_profile()
+				self.proxies.pop(proxy_id)
+				self.ui.combo_box_proxies.removeItem(self.ui.combo_box_proxies.findData(proxy_id))
+			except Exception as e:
+				print(f'{e}')
 
 	def delete_all_proxy_profiles(self):
 		# prompt dialog for "are you sure" before deleting
-		if self.confirmation_dialog('Please Confirm', 'Are you sure you want to delete all proxies?'):
+		if self.confirmation_dialog('Please Confirm', 'Are you sure you want to delete all proxy profiles?'):
 			try:
-				self.tgadb.delete_all_proxies()
-			except Exception as e:
-				self.post_to_log('Error deleting all proxy profiles [{}]'.format(str(e)))
-			else:
-				# post to log
-				self.post_to_log('Deleted all proxy profiles successfully')
-				# clear fields
-				self.new_proxy_profile()
+				self.ui.combo_box_proxies.clear()
 				self.ui.list_widget_proxies.clear()
-				# clear selections
-				self.ui.list_widget_proxies.clearSelection()
-				self.ui.list_widget_proxies.selectionModel().clear()
-				# update combo box billing profile
-				self.load_combo_box_proxies()
-		else:
-			print('Operation aborted')
+				self.tgadb.delete_all_proxies()
+				self.proxies = {}
+			except Exception as e:
+				print(f'{e}')
 
 	def import_proxies(self):
 		# print(type(self.open_file()))
@@ -2461,7 +2315,7 @@ class GUI(QtWidgets.QMainWindow):
 
 	def update_proxy_count(self):
 		i = self.ui.plain_text_edit_proxies.toPlainText().splitlines()
-		self.ui.label_proxy_count.setText(str(len(i)))
+		self.ui.label_proxy_count.setText(f'{len(i)}')
 
 	def open_file(self):
 		file_path = QtWidgets.QFileDialog.getOpenFileName(filter='*.txt')
