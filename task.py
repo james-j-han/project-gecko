@@ -3,8 +3,6 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineProfile
 from PyQt5.QtNetwork import QNetworkCookie, QNetworkCookieJar
 
-from qasync import QEventLoop
-
 from stores.store_shopify import Shopify
 from stores.store_target import Target
 from stores.store_bestbuy import BestBuy

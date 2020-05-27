@@ -162,6 +162,11 @@ class GUI(QtWidgets.QMainWindow):
 
 		self.load_stores('Normal')
 
+		self.ui.combo_box_task_type.currentTextChanged.connect(self.load_stores)
+		self.ui.combo_box_task_type.currentIndexChanged.connect(self.add_task_type)
+		self.ui.combo_box_store.currentTextChanged.connect(self.load_search_options)
+		self.ui.combo_box_search_type.currentTextChanged.connect(self.load_task_options)
+
 		self.fallback_sitekeys = {
 			'https://shop.funko.com/': '6LeoeSkTAAAAAA9rkZs5oS82l69OEYjKRZAiKdaF',
 			# 'https://shop.funko.com/': '6LcCR2cUAAAAANS1Gpq_mDIJ2pQuJphsSQaUEuc9',
@@ -292,9 +297,6 @@ class GUI(QtWidgets.QMainWindow):
 
 		# self.ui.label_picture.setScaledContents(False)
 		# self.ui.combo_box_store.currentIndexChanged.connect(self.load_types)
-		self.ui.combo_box_task_type.currentTextChanged.connect(self.load_stores)
-		self.ui.combo_box_store.currentTextChanged.connect(self.load_search_options)
-		self.ui.combo_box_search_type.currentTextChanged.connect(self.load_task_options)
 		self.ui.push_button_start_tasks.setText('Start All')
 		self.ui.push_button_start_tasks.clicked.connect(self.start_tasks)
 		self.ui.push_button_stop_tasks.setText('Stop All')
@@ -856,6 +858,28 @@ class GUI(QtWidgets.QMainWindow):
 #================================================================================
 
 # Nothing as of yet, may implement later
+
+#================================================================================
+# SAVE TASK ITEM FUNCTIONS
+#================================================================================
+
+	def add_task_type(self, index):
+		if index >= 0:
+			self.items_to_save['combo_box_task_type'] = self.ui.combo_box_task_type.currentText()
+		else:
+			self.items_to_save['combo_box_task_type'] = None
+
+	def add_store(self, index):
+		if index >= 0:
+			self.items_to_save['combo_box_store'] = self.ui.combo_box_store.currentText()
+		else:
+			self.items_to_save['combo_box_store'] = None
+
+	def add_search_type(self, index):
+		if index >= 0:
+			self.items_to_save['combo_box_search_type'] = self.ui.combo_box_search_type.currentText()
+		else:
+			self.items_to_save['combo_box_search_type'] = None
 
 #================================================================================
 # TOGGLE FUNCTIONS
@@ -1836,12 +1860,7 @@ class GUI(QtWidgets.QMainWindow):
 	def enable_mass_edit(self):
 		for cb in self.cbe_items:
 			cb.setChecked(False)
-			# cb.setEnabled(True)
 			cb.show()
-		# for cb in self.mass_edit_items:
-		# 	cb[0].setChecked(False)
-		# 	cb[0].setEnabled(True)
-		# 	cb[0].show()
 
 		self.ui.label_tasks.setEnabled(False)
 		self.ui.line_edit_task_qty.setEnabled(False)
@@ -1870,12 +1889,7 @@ class GUI(QtWidgets.QMainWindow):
 	def disable_mass_edit(self):
 		for cb in self.cbe_items:
 			cb.setChecked(True)
-			# cb.setEnabled(False)
 			cb.hide()
-		# for cb in self.mass_edit_items:
-		# 	cb[0].setChecked(True)
-		# 	cb[0].setEnabled(False)
-		# 	cb[0].hide()
 
 		self.ui.label_tasks.setEnabled(True)
 		self.ui.line_edit_task_qty.setEnabled(True)
